@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Flow Diagrams — All Systems</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c10;--panel:#0f1318;--border:#1e2530;--accent:#00d4aa;--purple:#7c6af7;--orange:#ff6b35;--yellow:#ffd166;--red:#ff4466;--blue:#4fc3f7;--text:#c8d8e8;--dim:#4a5568}
+body{background:var(--bg);font-family:'JetBrains Mono',monospace;color:var(--text);min-height:100vh}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(0,212,170,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(0,212,170,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none}
+header{padding:60px 60px 40px;border-bottom:1px solid var(--border)}
+header h1{font-size:28px;font-weight:700;letter-spacing:-0.02em;color:var(--accent)}
+header p{font-size:12px;color:var(--dim);margin-top:8px;letter-spacing:.08em}
+.subtitle{font-size:11px;color:var(--dim);margin-top:4px;letter-spacing:.12em;text-transform:uppercase}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(340px,1fr));gap:1px;background:var(--border);margin:1px;padding:0}
+.card{background:var(--panel);padding:32px;text-decoration:none;color:var(--text);display:block;transition:background .15s;position:relative;overflow:hidden;border:0}
+.card::before{content:'';position:absolute;inset:0;opacity:0;transition:opacity .2s}
+.card:hover{background:#111620}
+.card:hover::before{opacity:1}
+.card-icon{font-size:24px;margin-bottom:16px}
+.card-num{position:absolute;top:20px;right:20px;font-size:11px;color:var(--dim);letter-spacing:.06em}
+.card h2{font-size:13px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px}
+.card p{font-size:11px;color:var(--dim);line-height:1.8;margin-bottom:16px}
+.card-tags{display:flex;flex-wrap:wrap;gap:6px}
+.tag{font-size:9px;padding:3px 8px;border:1px solid var(--border);color:var(--dim);letter-spacing:.06em}
+.card-arrow{position:absolute;bottom:24px;right:24px;font-size:16px;color:var(--dim);transition:all .2s}
+.card:hover .card-arrow{color:var(--accent);transform:translateX(4px)}
+.c0 h2{color:var(--accent)} .c0::before{background:rgba(0,212,170,.03)}
+.c1 h2{color:var(--blue)}   .c1::before{background:rgba(79,195,247,.03)}
+.c2 h2{color:var(--purple)} .c2::before{background:rgba(124,106,247,.03)}
+.c3 h2{color:#f06292}       .c3::before{background:rgba(240,98,146,.03)}
+.c4 h2{color:var(--yellow)} .c4::before{background:rgba(255,209,102,.03)}
+.c5 h2{color:var(--orange)} .c5::before{background:rgba(255,107,53,.03)}
+footer{padding:24px 60px;border-top:1px solid var(--border);font-size:10px;color:var(--dim);letter-spacing:.08em}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<header>
+  <div class="subtitle">// interactive flow diagrams</div>
+  <h1>All Systems Visualized</h1>
+  <p>35 animated flow diagrams across 6 categories — distributed systems, networking, data pipelines, web architecture, business processes & algorithms</p>
+</header>
+<div class="grid">
+  <a href="01-distributed-systems.html" class="card c0">
+    <div class="card-num">07 diagrams</div>
+    <div class="card-icon">⬡</div>
+    <h2>Distributed Systems</h2>
+    <p>Kafka, load balancers, CDN routing, Kubernetes scheduling, database replication, microservices, and CI/CD pipelines.</p>
+    <div class="card-tags"><span class="tag">Kafka</span><span class="tag">Load Balancer</span><span class="tag">CDN</span><span class="tag">K8s</span><span class="tag">DB Replication</span><span class="tag">CI/CD</span></div>
+    <div class="card-arrow">→</div>
+  </a>
+  <a href="02-networking-security.html" class="card c1">
+    <div class="card-num">05 diagrams</div>
+    <div class="card-icon">⬡</div>
+    <h2>Networking &amp; Security</h2>
+    <p>TCP handshake, DNS resolution chain, OAuth2 auth flow, firewall packet filtering, and VPN tunnel encryption.</p>
+    <div class="card-tags"><span class="tag">TCP</span><span class="tag">DNS</span><span class="tag">OAuth2</span><span class="tag">Firewall</span><span class="tag">VPN</span></div>
+    <div class="card-arrow">→</div>
+  </a>
+  <a href="03-data-ml-pipelines.html" class="card c2">
+    <div class="card-num">05 diagrams</div>
+    <div class="card-icon">⬡</div>
+    <h2>Data &amp; ML Pipelines</h2>
+    <p>ETL pipeline, Spark data streaming, ML training loop, RAG pipeline, and feature store architecture.</p>
+    <div class="card-tags"><span class="tag">ETL</span><span class="tag">Spark</span><span class="tag">ML Training</span><span class="tag">RAG</span><span class="tag">Feature Store</span></div>
+    <div class="card-arrow">→</div>
+  </a>
+  <a href="04-app-web-architecture.html" class="card c3">
+    <div class="card-num">05 diagrams</div>
+    <div class="card-icon">⬡</div>
+    <h2>App &amp; Web Architecture</h2>
+    <p>HTTP request lifecycle, React rendering cycle, GraphQL resolver chain, cache hierarchy, and WebSocket vs REST.</p>
+    <div class="card-tags"><span class="tag">HTTP</span><span class="tag">React</span><span class="tag">GraphQL</span><span class="tag">Cache</span><span class="tag">WebSocket</span></div>
+    <div class="card-arrow">→</div>
+  </a>
+  <a href="05-business-processes.html" class="card c4">
+    <div class="card-num">05 diagrams</div>
+    <div class="card-icon">⬡</div>
+    <h2>Business &amp; Product</h2>
+    <p>Order lifecycle, user onboarding funnel, Git branching flow, incident management, and A/B test traffic split.</p>
+    <div class="card-tags"><span class="tag">Order Flow</span><span class="tag">Onboarding</span><span class="tag">Git Flow</span><span class="tag">Incidents</span><span class="tag">A/B Test</span></div>
+    <div class="card-arrow">→</div>
+  </a>
+  <a href="06-algorithms-cs.html" class="card c5">
+    <div class="card-num">06 diagrams</div>
+    <div class="card-icon">⬡</div>
+    <h2>Algorithms &amp; CS</h2>
+    <p>Sorting algorithms, BFS/DFS graph traversal, consistent hashing ring, Raft consensus, rate limiter, and binary search.</p>
+    <div class="card-tags"><span class="tag">Sorting</span><span class="tag">BFS/DFS</span><span class="tag">Hashing</span><span class="tag">Raft</span><span class="tag">Rate Limit</span></div>
+    <div class="card-arrow">→</div>
+  </a>
+</div>
+<footer>// 35 interactive animated flow diagrams · open each file to explore</footer>
+</body>
+</html>

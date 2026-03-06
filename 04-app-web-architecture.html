@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>App & Web Architecture — Flow Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c10;--panel:#0f1318;--border:#1e2530;--accent:#00d4aa;--purple:#7c6af7;--orange:#ff6b35;--yellow:#ffd166;--red:#ff4466;--blue:#4fc3f7;--pink:#f06292;--text:#c8d8e8;--dim:#4a5568}
+body{background:var(--bg);font-family:'JetBrains Mono',monospace;color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(240,98,146,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(240,98,146,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+header{padding:20px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;z-index:1;position:relative}
+.back{font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.1em;transition:color .15s}.back:hover{color:var(--pink)}
+header h1{font-size:13px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--pink)}
+header span{font-size:10px;color:var(--dim)}
+.tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;z-index:1;position:relative;flex-shrink:0}
+.tab{font-size:10px;letter-spacing:.08em;padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;color:var(--dim);transition:all .15s;text-transform:uppercase}
+.tab:hover{color:var(--text)}.tab.active{color:var(--pink);border-bottom-color:var(--pink)}
+.workspace{flex:1;display:flex;flex-direction:column;z-index:1;position:relative}
+.diagram-info{padding:20px 32px 0;display:flex;gap:24px;align-items:baseline}
+.diagram-info h2{font-size:14px;font-weight:700;color:var(--text)}
+.diagram-info p{font-size:10px;color:var(--dim)}
+.controls{padding:12px 32px;display:flex;gap:10px;border-bottom:1px solid var(--border)}
+.btn{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 16px;border:1px solid;cursor:pointer;background:transparent;transition:all .15s}
+.btn-p{border-color:var(--pink);color:var(--pink)}.btn-p:hover{background:var(--pink);color:var(--bg)}
+.btn-s{border-color:var(--dim);color:var(--dim)}.btn-s:hover{border-color:var(--text);color:var(--text)}
+.btn-r{border-color:var(--red);color:var(--red)}.btn-r:hover{background:var(--red);color:var(--bg)}
+.canvas{flex:1;padding:32px;min-height:320px;position:relative;overflow:hidden}
+.log{height:90px;overflow-y:auto;border-top:1px solid var(--border);padding:10px 32px;font-size:9px;line-height:1.9}
+.log::-webkit-scrollbar{width:3px}.log::-webkit-scrollbar-thumb{background:var(--dim)}
+.le{display:flex;gap:10px}.le .t{color:var(--dim);min-width:65px}.le.ok .m{color:var(--accent)}.le.warn .m{color:var(--yellow)}.le.err .m{color:var(--red)}.le.info .m{color:var(--pink)}
+.node{position:absolute;padding:8px 12px;border:1px solid;font-size:10px;text-align:center;transition:all .25s;white-space:nowrap}
+.ng{background:rgba(0,212,170,.07);border-color:rgba(0,212,170,.3);color:var(--accent)}
+.np{background:rgba(124,106,247,.07);border-color:rgba(124,106,247,.3);color:var(--purple)}
+.no{background:rgba(255,107,53,.07);border-color:rgba(255,107,53,.3);color:var(--orange)}
+.nb{background:rgba(79,195,247,.07);border-color:rgba(79,195,247,.3);color:var(--blue)}
+.ny{background:rgba(255,209,102,.07);border-color:rgba(255,209,102,.3);color:var(--yellow)}
+.nr{background:rgba(255,68,102,.07);border-color:rgba(255,68,102,.3);color:var(--red)}
+.nk{background:rgba(240,98,146,.07);border-color:rgba(240,98,146,.3);color:var(--pink)}
+.node.active{filter:brightness(1.6);box-shadow:0 0 12px currentColor}
+.node .sub{font-size:8px;color:var(--dim);margin-top:2px}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<header>
+  <a href="index.html" class="back">← hub</a>
+  <h1>App &amp; Web Architecture</h1>
+  <span>// 5 animated flow diagrams</span>
+</header>
+<div class="tabs" id="tabs"></div>
+<div class="workspace">
+  <div class="diagram-info"><h2 id="dTitle"></h2><p id="dDesc"></p></div>
+  <div class="controls">
+    <button class="btn btn-p" id="btnPlay">▶ Start</button>
+    <button class="btn btn-s" id="btnPause">⏸ Pause</button>
+    <button class="btn btn-r" id="btnReset">↺ Reset</button>
+  </div>
+  <div class="canvas" id="canvas"></div>
+  <div class="log" id="log"></div>
+</div>
+<script>
+let current=null,iid=null,running=false;
+const logEl=document.getElementById('log'),canvas=document.getElementById('canvas');
+function ts(){const n=new Date();return`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`}
+function log(type,msg){const d=document.createElement('div');d.className=`le ${type}`;d.innerHTML=`<span class="t">${ts()}</span><span class="m">${msg}</span>`;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;while(logEl.children.length>40)logEl.removeChild(logEl.firstChild)}
+function clearLog(){logEl.innerHTML=''}
+function mkNode(x,y,w,label,sub,cls){const d=document.createElement('div');d.className=`node ${cls}`;d.style.cssText=`left:${x}px;top:${y}px;width:${w}px`;d.innerHTML=label+(sub?`<div class="sub">${sub}</div>`:'');canvas.appendChild(d);return d}
+
+const diagrams=[
+// 0: HTTP Lifecycle
+{title:'HTTP Request Lifecycle',desc:'Browser → DNS → TCP → TLS → Server → Response',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const steps_nodes=[
+    mkNode(30,120,90,'Browser','chrome/ff','np'),
+    mkNode(cx/6,120,90,'DNS Lookup','resolve IP','nb'),
+    mkNode(cx/6*2,120,90,'TCP Connect','3-way hs','ny'),
+    mkNode(cx/6*3,120,90,'TLS Setup','cert verify','no'),
+    mkNode(cx/6*4,120,100,'HTTP Request','GET /page','nk'),
+    mkNode(cx/6*5,120,100,'HTTP Response','200 + HTML','ng'),
+  ];
+  let si=0;const times=[0,2,15,80,100,250];
+  this._tick=()=>{
+    steps_nodes.forEach(n=>n.classList.remove('active'));
+    steps_nodes[si].classList.add('active');
+    const msgs=[
+      '[Browser] user navigates to example.com',
+      `[DNS] resolving example.com → 93.184.216.34 (${times[1]}ms)`,
+      `[TCP] SYN→SYN-ACK→ACK complete (${times[2]}ms)`,
+      `[TLS] handshake, cert verified, session key (${times[3]}ms)`,
+      `[HTTP] GET / HTTP/2 Host: example.com (${times[4]}ms)`,
+      `[Response] 200 OK 24kb HTML TTFB:${times[5]}ms ✓`,
+    ];
+    log(si===5?'ok':'info',msgs[si]);si=(si+1)%steps_nodes.length;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 1: React Rendering
+{title:'React Rendering Cycle',desc:'State change → reconciliation → virtual DOM diff → commit',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const state=mkNode(30,100,110,'State/Props','useState/Redux','np');
+  const render=mkNode(cx/4,100,110,'render()','JSX → vDOM','nk');
+  const vdom=mkNode(cx/2-60,60,130,'Virtual DOM','new tree','nb');
+  const diff=mkNode(cx/2-60,160,130,'Reconciler','fiber diff','ny');
+  const commit=mkNode(cx*3/4,100,120,'Commit Phase','apply patches','no');
+  const dom=mkNode(cx-160,100,140,'Real DOM','browser paint','ng');
+  let renders=0;const components=['<App>','<Header>','<Button>','<Modal>','<List>'];
+  this._tick=()=>{
+    renders++;
+    const comp=components[Math.floor(Math.random()*components.length)];
+    const isUpdate=Math.random()>.3;
+    const nodes=[state,render,vdom,diff,commit,dom];
+    let delay=0;
+    nodes.forEach(n=>{setTimeout(()=>{n.classList.add('active');setTimeout(()=>n.classList.remove('active'),250)},delay+=120)});
+    const patches=Math.floor(Math.random()*8+1);
+    log('info',`[${comp}] render #${renders} → ${patches} DOM patch${patches>1?'es':''} (${isUpdate?'update':'mount'})`);
+    if(patches===0)log('ok','[Reconciler] bailed out — no changes detected');
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1400)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 2: GraphQL
+{title:'GraphQL Resolver Chain',desc:'Query parsing → resolver tree → data sources → response',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const client=mkNode(30,130,90,'Client','query','np');
+  const gql=mkNode(cx/5,130,110,'GQL Engine','parse+plan','nk');
+  const r1=mkNode(cx/2-80,60,120,'userResolver','User type','nb');
+  const r2=mkNode(cx/2-80,130,120,'postsResolver','[Post]','ny');
+  const r3=mkNode(cx/2-80,200,120,'friendsResolver','[User]','no');
+  const db=mkNode(cx-160,80,120,'PostgreSQL','users/posts','ng');
+  const cache=mkNode(cx-160,180,120,'Redis Cache','friends','ng');
+  const queries=[
+    '{ user(id:1) { name posts { title } } }',
+    '{ me { friends { name } notifications } }',
+    '{ search(q:"kafka") { users posts } }',
+  ];
+  let qi=0;
+  this._tick=()=>{
+    const q=queries[qi%queries.length];qi++;
+    gql.classList.add('active');setTimeout(()=>gql.classList.remove('active'),300);
+    const resolvers=[r1,r2,r3];
+    const used=resolvers.slice(0,Math.floor(Math.random()*3)+1);
+    used.forEach((r,i)=>{setTimeout(()=>{r.classList.add('active');setTimeout(()=>r.classList.remove('active'),300)},300+i*200)});
+    setTimeout(()=>{db.classList.add('active');setTimeout(()=>db.classList.remove('active'),300)},700);
+    log('info',`[GQL] ${q.slice(0,50)}`);
+    setTimeout(()=>log('ok',`[Response] resolved ${used.length} resolvers, 1 DB query`),800);
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1500)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 3: Cache Hierarchy
+{title:'Cache Hierarchy',desc:'L1 memory → L2 Redis → origin DB — hit rate and latency',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const req=mkNode(30,130,90,'Request','GET /data','np');
+  const l1=mkNode(cx/4,60,120,'L1 Cache','in-memory','ng');
+  const l2=mkNode(cx/2-60,60,120,'L2 Cache','Redis','ny');
+  const db=mkNode(cx*3/4,60,120,'Database','PostgreSQL','nb');
+  const resp=mkNode(cx-120,130,100,'Response','200 OK','ng');
+  // hit counters
+  const hits={l1:0,l2:0,db:0};const total={count:0};
+  const statEl=document.createElement('div');statEl.style.cssText='position:absolute;bottom:20px;left:20px;font-size:9px;color:var(--dim);line-height:2';canvas.appendChild(statEl);
+  const updateStat=()=>{const t=hits.l1+hits.l2+hits.db||1;statEl.innerHTML=`L1 hit: <span style="color:var(--accent)">${((hits.l1/t)*100).toFixed(0)}%</span>  L2 hit: <span style="color:var(--yellow)">${((hits.l2/t)*100).toFixed(0)}%</span>  DB: <span style="color:var(--blue)">${((hits.db/t)*100).toFixed(0)}%</span>`};
+  this._tick=()=>{
+    total.count++;
+    const r=Math.random();
+    if(r<.6){hits.l1++;l1.classList.add('active');setTimeout(()=>l1.classList.remove('active'),300);resp.classList.add('active');setTimeout(()=>resp.classList.remove('active'),300);log('ok',`[Cache] L1 HIT key:item_${Math.floor(Math.random()*100)} lat:0.1ms`)}
+    else if(r<.85){hits.l2++;l2.classList.add('active');setTimeout(()=>l2.classList.remove('active'),300);resp.classList.add('active');setTimeout(()=>resp.classList.remove('active'),300);log('warn',`[Cache] L1 MISS → L2 HIT lat:3ms`)}
+    else{hits.db++;db.classList.add('active');setTimeout(()=>db.classList.remove('active'),400);log('err',`[Cache] L1+L2 MISS → DB query lat:${Math.floor(Math.random()*20+10)}ms`);setTimeout(()=>log('info','[Cache] result stored in L1+L2'),300)}
+    updateStat();
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),700)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 4: WebSocket vs REST
+{title:'WebSocket vs REST',desc:'Side-by-side comparison of bidirectional vs request-response',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;const half=cx/2-20;
+  // Labels
+  const lbl1=document.createElement('div');lbl1.style.cssText='position:absolute;left:20px;top:5px;font-size:9px;color:var(--blue);letter-spacing:.12em;text-transform:uppercase';lbl1.textContent='REST (HTTP)';canvas.appendChild(lbl1);
+  const lbl2=document.createElement('div');lbl2.style.cssText=`position:absolute;left:${half+30}px;top:5px;font-size:9px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase`;lbl2.textContent='WebSocket';canvas.appendChild(lbl2);
+  const div=document.createElement('div');div.style.cssText=`position:absolute;left:${half+10}px;top:0;bottom:0;width:1px;background:var(--border)`;canvas.appendChild(div);
+  // REST side
+  const rc=mkNode(20,60,90,'Client','browser','nb');
+  const rs=mkNode(20+half-110,60,100,'Server','api.example','nb');
+  // WS side
+  const wc=mkNode(half+20,60,90,'Client','browser','ng');
+  const ws_=mkNode(half+20+half-110,60,100,'Server','ws.example','ng');
+  let rtick=0,wstick=0;
+  this._tick=()=>{
+    rtick++;
+    rc.classList.add('active');setTimeout(()=>rc.classList.remove('active'),200);
+    rs.classList.add('active');setTimeout(()=>rs.classList.remove('active'),300);
+    log('info',`[REST] req #${rtick} → new TCP+TLS per request`);
+    // WS is persistent
+    wstick++;const dir=Math.random()>.5;
+    (dir?wc:ws_).classList.add('active');setTimeout(()=>{wc.classList.remove('active');ws_.classList.remove('active')},300);
+    log('ok',`[WS] frame #${wstick} ${dir?'client→server':'server→client'} (persistent conn)`);
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+];
+
+const tabsEl=document.getElementById('tabs');
+diagrams.forEach((d,i)=>{const t=document.createElement('div');t.className='tab';t.textContent=d.title;t.onclick=()=>show(i);tabsEl.appendChild(t)});
+function show(i){if(current!==null)diagrams[current].pause&&diagrams[current].pause();running=false;clearInterval(iid);current=i;document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.getElementById('dTitle').textContent=diagrams[i].title;document.getElementById('dDesc').textContent=diagrams[i].desc;diagrams[i].init()}
+document.getElementById('btnPlay').onclick=()=>{if(current!==null&&!running){diagrams[current].start();running=true;}};
+document.getElementById('btnPause').onclick=()=>{if(current!==null){diagrams[current].pause();running=false;}};
+document.getElementById('btnReset').onclick=()=>{if(current!==null){diagrams[current].reset();running=false;}};
+show(0);
+</script>
+</body>
+</html>

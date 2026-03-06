@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Algorithms & CS — Flow Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c10;--panel:#0f1318;--border:#1e2530;--accent:#00d4aa;--purple:#7c6af7;--orange:#ff6b35;--yellow:#ffd166;--red:#ff4466;--blue:#4fc3f7;--text:#c8d8e8;--dim:#4a5568}
+body{background:var(--bg);font-family:'JetBrains Mono',monospace;color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,107,53,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,53,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+header{padding:20px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;z-index:1;position:relative}
+.back{font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.1em;transition:color .15s}.back:hover{color:var(--orange)}
+header h1{font-size:13px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--orange)}
+header span{font-size:10px;color:var(--dim)}
+.tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;z-index:1;position:relative;flex-shrink:0}
+.tab{font-size:10px;letter-spacing:.08em;padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;color:var(--dim);transition:all .15s;text-transform:uppercase}
+.tab:hover{color:var(--text)}.tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+.workspace{flex:1;display:flex;flex-direction:column;z-index:1;position:relative}
+.diagram-info{padding:20px 32px 0;display:flex;gap:24px;align-items:baseline}
+.diagram-info h2{font-size:14px;font-weight:700;color:var(--text)}
+.diagram-info p{font-size:10px;color:var(--dim)}
+.controls{padding:12px 32px;display:flex;gap:10px;border-bottom:1px solid var(--border)}
+.btn{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 16px;border:1px solid;cursor:pointer;background:transparent;transition:all .15s}
+.btn-p{border-color:var(--orange);color:var(--orange)}.btn-p:hover{background:var(--orange);color:var(--bg)}
+.btn-s{border-color:var(--dim);color:var(--dim)}.btn-s:hover{border-color:var(--text);color:var(--text)}
+.btn-r{border-color:var(--red);color:var(--red)}.btn-r:hover{background:var(--red);color:var(--bg)}
+.canvas{flex:1;padding:32px;min-height:320px;position:relative;overflow:hidden}
+.log{height:90px;overflow-y:auto;border-top:1px solid var(--border);padding:10px 32px;font-size:9px;line-height:1.9}
+.log::-webkit-scrollbar{width:3px}.log::-webkit-scrollbar-thumb{background:var(--dim)}
+.le{display:flex;gap:10px}.le .t{color:var(--dim);min-width:65px}.le.ok .m{color:var(--accent)}.le.warn .m{color:var(--yellow)}.le.err .m{color:var(--red)}.le.info .m{color:var(--orange)}
+/* Sort bars */
+.bar{position:absolute;bottom:60px;background:rgba(79,195,247,.3);border-top:2px solid var(--blue);transition:all .3s ease;cursor:default}
+.bar.comparing{background:rgba(255,209,102,.3);border-top-color:var(--yellow)}
+.bar.swapping{background:rgba(255,107,53,.3);border-top-color:var(--orange)}
+.bar.sorted{background:rgba(0,212,170,.15);border-top-color:var(--accent)}
+/* Graph nodes */
+.gnode{position:absolute;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;border:2px solid;transition:all .3s}
+.gnode.unvisited{background:rgba(79,195,247,.1);border-color:rgba(79,195,247,.4);color:var(--blue)}
+.gnode.visiting{background:rgba(255,209,102,.2);border-color:var(--yellow);color:var(--yellow);box-shadow:0 0 10px var(--yellow)}
+.gnode.visited{background:rgba(0,212,170,.15);border-color:var(--accent);color:var(--accent)}
+/* Ring/hash */
+.ring-node{position:absolute;width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;border:2px solid;transform:translate(-50%,-50%)}
+/* Token bucket */
+.token{position:absolute;width:18px;height:18px;border-radius:50%;background:rgba(0,212,170,.3);border:1px solid var(--accent);font-size:7px;display:flex;align-items:center;justify-content:center;color:var(--accent);transition:all .2s}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<header>
+  <a href="index.html" class="back">← hub</a>
+  <h1>Algorithms &amp; CS Concepts</h1>
+  <span>// 6 animated flow diagrams</span>
+</header>
+<div class="tabs" id="tabs"></div>
+<div class="workspace">
+  <div class="diagram-info"><h2 id="dTitle"></h2><p id="dDesc"></p></div>
+  <div class="controls">
+    <button class="btn btn-p" id="btnPlay">▶ Start</button>
+    <button class="btn btn-s" id="btnPause">⏸ Pause</button>
+    <button class="btn btn-r" id="btnReset">↺ Reset</button>
+  </div>
+  <div class="canvas" id="canvas"></div>
+  <div class="log" id="log"></div>
+</div>
+<script>
+let current=null,iid=null,running=false;
+const logEl=document.getElementById('log'),cv=document.getElementById('canvas');
+function ts(){const n=new Date();return`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`}
+function log(type,msg){const d=document.createElement('div');d.className=`le ${type}`;d.innerHTML=`<span class="t">${ts()}</span><span class="m">${msg}</span>`;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;while(logEl.children.length>40)logEl.removeChild(logEl.firstChild)}
+function clearLog(){cv.innerHTML='';logEl.innerHTML=''}
+
+const diagrams=[
+// 0: Bubble Sort
+{title:'Bubble Sort',desc:'Adjacent element comparison and swap — O(n²) time complexity',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  const N=14;
+  let arr=Array.from({length:N},()=>Math.floor(Math.random()*200+20));
+  const cx=cv.offsetWidth-64;
+  const barW=Math.floor(cx/N)-2;
+  let bars=[];
+  const render=()=>{cv.querySelectorAll('.bar').forEach(b=>b.remove());bars=arr.map((v,i)=>{const b=document.createElement('div');b.className='bar';b.style.cssText=`left:${i*(barW+2)}px;width:${barW}px;height:${v}px`;cv.appendChild(b);return b})};
+  render();
+  let i=0,j=0,passes=0,swaps=0,sorted=false;
+  this._tick=()=>{
+    if(sorted)return;
+    bars.forEach(b=>{b.classList.remove('comparing','swapping');});
+    if(j<N-i-1){
+      bars[j].classList.add('comparing');bars[j+1].classList.add('comparing');
+      if(arr[j]>arr[j+1]){
+        [arr[j],arr[j+1]]=[arr[j+1],arr[j]];
+        bars[j].style.height=arr[j]+'px';bars[j+1].style.height=arr[j+1]+'px';
+        bars[j].classList.add('swapping');bars[j+1].classList.add('swapping');swaps++;
+        log('info',`[Swap] arr[${j}]↔arr[${j+1}] swaps:${swaps}`);
+      }
+      j++;
+    } else {
+      bars[N-i-1].classList.add('sorted');j=0;i++;passes++;
+      log('ok',`[Pass ${passes}] completed, ${N-i} elements remaining`);
+      if(i>=N){sorted=true;bars.forEach(b=>b.classList.add('sorted'));log('ok',`✓ Sorted in ${passes} passes, ${swaps} swaps`)}
+    }
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),180)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 1: BFS Graph Traversal
+{title:'BFS Graph Traversal',desc:'Breadth-first search — visit all nodes level by level using a queue',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  // Node positions (7 nodes)
+  const positions=[
+    {x:cv.offsetWidth/2-20,y:30},   // 0 root
+    {x:cv.offsetWidth/4-20,y:120},  // 1
+    {x:cv.offsetWidth*3/4-20,y:120},// 2
+    {x:cv.offsetWidth/6-20,y:220},  // 3
+    {x:cv.offsetWidth/3-20,y:220},  // 4
+    {x:cv.offsetWidth*2/3-20,y:220},// 5
+    {x:cv.offsetWidth*5/6-20,y:220},// 6
+  ];
+  const edges=[[0,1],[0,2],[1,3],[1,4],[2,5],[2,6]];
+  // Draw edges
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
+  edges.forEach(([a,b])=>{const pa=positions[a],pb=positions[b];const l=document.createElementNS('http://www.w3.org/2000/svg','line');l.setAttribute('x1',pa.x+20);l.setAttribute('y1',pa.y+20);l.setAttribute('x2',pb.x+20);l.setAttribute('y2',pb.y+20);l.setAttribute('stroke','#2a3545');l.setAttribute('stroke-width','1.5');svg.appendChild(l)});
+  cv.appendChild(svg);
+  // Draw nodes
+  const gnodes=positions.map((p,i)=>{const d=document.createElement('div');d.className='gnode unvisited';d.style.left=p.x+'px';d.style.top=p.y+'px';d.textContent=i;cv.appendChild(d);return d});
+  const adjacency=[[1,2],[3,4],[5,6],[],[],[],[]];
+  const visited=new Array(7).fill(false);
+  const queue=[0];visited[0]=true;
+  gnodes[0].classList.replace('unvisited','visiting');
+  this._tick=()=>{
+    if(queue.length===0){log('ok','[BFS] traversal complete — all nodes visited');return}
+    const node=queue.shift();
+    gnodes[node].classList.replace('visiting','visited');
+    log('info',`[BFS] dequeue node:${node} queue:[${queue}]`);
+    adjacency[node].forEach(n=>{if(!visited[n]){visited[n]=true;queue.push(n);gnodes[n].classList.replace('unvisited','visiting');log('info',`[BFS] enqueue node:${n}`)}});
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 2: Consistent Hashing
+{title:'Consistent Hashing',desc:'Hash ring with virtual nodes — key routing and node rebalancing',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  const cx=cv.offsetWidth/2,cy=150,R=110;
+  // Ring
+  const ringDiv=document.createElement('div');
+  ringDiv.style.cssText=`position:absolute;left:${cx-R}px;top:${cy-R}px;width:${R*2}px;height:${R*2}px;border-radius:50%;border:1px dashed rgba(255,107,53,.25)`;
+  cv.appendChild(ringDiv);
+  const serverAngles=[0,90,180,270];
+  const serverColors=['#00d4aa','#4fc3f7','#7c6af7','#ffd166'];
+  serverAngles.forEach((a,i)=>{
+    const rad=a*Math.PI/180;
+    const x=cx+Math.cos(rad)*R,y=cy+Math.sin(rad)*R;
+    const n=document.createElement('div');n.className='ring-node';
+    n.style.cssText=`left:${x}px;top:${y}px;background:${serverColors[i]}18;border-color:${serverColors[i]}88;color:${serverColors[i]};font-size:9px`;
+    n.textContent=`S${i}`;cv.appendChild(n);
+  });
+  let keyCount=0;
+  this._tick=()=>{
+    keyCount++;
+    const hash=Math.floor(Math.random()*360);
+    // find nearest server clockwise
+    const serverIdx=serverAngles.findIndex(a=>a>=hash%360)||0;
+    const si=Math.floor(hash/90)%4;
+    const rad=hash*Math.PI/180;
+    const x=cx+Math.cos(rad)*R,y=cy+Math.sin(rad)*R;
+    const dot=document.createElement('div');dot.style.cssText=`position:absolute;left:${x-5}px;top:${y-5}px;width:10px;height:10px;border-radius:50%;background:${serverColors[si]};z-index:5`;
+    cv.appendChild(dot);setTimeout(()=>dot.remove(),1200);
+    log('info',`[Hash] key:${Math.random().toString(36).slice(2,8)} hash:${hash}° → Server S${si}`);
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),800)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 3: Raft Consensus
+{title:'Raft Consensus',desc:'Leader election, log replication, and commit across a 5-node cluster',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  const cx=cv.offsetWidth;
+  const positions=[{x:cx/2-20,y:20},{x:80,y:100},{x:cx-130,y:100},{x:120,y:210},{x:cx-160,y:210}];
+  const nodes=positions.map((p,i)=>{
+    const d=document.createElement('div');d.className='gnode unvisited';
+    d.style.cssText=`left:${p.x}px;top:${p.y}px;width:50px;height:50px;font-size:9px`;
+    d.innerHTML=`N${i}<div style="font-size:7px;color:var(--dim);margin-top:2px">follower</div>`;
+    cv.appendChild(d);return d});
+  let leader=0;let term=1;let logIdx=0;
+  const makeLeader=(i)=>{
+    nodes.forEach((n,j)=>{n.classList.remove('visiting','visited');n.classList.add('unvisited');n.querySelector('div').textContent='follower'});
+    leader=i;nodes[i].classList.replace('unvisited','visiting');nodes[i].querySelector('div').textContent='LEADER';
+  };
+  makeLeader(0);
+  const events=[
+    ()=>{logIdx++;log('info',`[Leader N${leader}] appending entry idx:${logIdx} term:${term}`)},
+    ()=>{const f=Math.floor(Math.random()*4)+1;if(f===leader)return;nodes[f].classList.add('visited');log('info',`[N${f}] AppendEntries ACK idx:${logIdx}`)},
+    ()=>{log('ok',`[Raft] quorum reached, entry idx:${logIdx} committed`)},
+    ()=>{if(Math.random()>.7){const newLeader=Math.floor(Math.random()*5);term++;makeLeader(newLeader);log('warn',`[Election] term:${term} N${newLeader} wins election`)}else{log('info',`[Heartbeat] N${leader} → followers term:${term}`)}},
+  ];
+  let ei=0;
+  this._tick=()=>{events[ei%events.length]();ei++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),950)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 4: Rate Limiter (Token Bucket)
+{title:'Token Bucket Rate Limiter',desc:'Tokens fill at steady rate — requests consume tokens, bursts allowed',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  const MAX=10;let tokens=10;let allowed=0,denied=0;
+  // Bucket visual
+  const bucketEl=document.createElement('div');
+  bucketEl.style.cssText='position:absolute;left:50%;top:40px;transform:translateX(-50%);width:160px;height:120px;border:1px solid rgba(0,212,170,.4);background:rgba(0,212,170,.03)';
+  cv.appendChild(bucketEl);
+  const fill=document.createElement('div');fill.style.cssText='position:absolute;bottom:0;left:0;right:0;background:rgba(0,212,170,.2);transition:height .3s';
+  bucketEl.appendChild(fill);
+  const countEl=document.createElement('div');countEl.style.cssText='position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-size:20px;font-weight:700;color:var(--accent)';
+  bucketEl.appendChild(countEl);
+  const labelEl=document.createElement('div');labelEl.style.cssText='position:absolute;top:200px;left:50%;transform:translateX(-50%);font-size:9px;color:var(--dim);text-align:center;white-space:nowrap;letter-spacing:.06em';cv.appendChild(labelEl);
+  const statsEl=document.createElement('div');statsEl.style.cssText='position:absolute;bottom:20px;left:20px;font-size:9px;line-height:2';cv.appendChild(statsEl);
+  const update=()=>{fill.style.height=`${(tokens/MAX)*100}%`;countEl.textContent=tokens;labelEl.textContent=`capacity: ${MAX} tokens  ·  refill: 1/sec`;statsEl.innerHTML=`allowed: <span style="color:var(--accent)">${allowed}</span>  denied: <span style="color:var(--red)">${denied}</span>`};
+  update();
+  let tick=0;
+  this._tick=()=>{
+    tick++;
+    // Refill 1 token per 3 ticks
+    if(tick%3===0&&tokens<MAX){tokens++;log('info',`[Bucket] refill +1 token → ${tokens}/${MAX}`)}
+    // Incoming request
+    const cost=Math.random()>.7?2:1;
+    if(tokens>=cost){tokens-=cost;allowed++;log('ok',`[Allow] request consumed ${cost} token(s), remaining:${tokens}`)}
+    else{denied++;log('err',`[Deny] insufficient tokens (need:${cost} have:${tokens}) — rate limited`)}
+    update();
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),500)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 5: Binary Search
+{title:'Binary Search',desc:'Divide and conquer — O(log n) search through sorted array',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  const N=16;
+  const arr=Array.from({length:N},(_, i)=>i*7+Math.floor(Math.random()*4));
+  arr.sort((a,b)=>a-b);
+  let target=arr[Math.floor(Math.random()*N)];
+  const cx=cv.offsetWidth-64;const barW=Math.floor(cx/N)-2;
+  let lo=0,hi=N-1;let found=false;let steps=0;
+  const render=(lo,hi,mid,found)=>{
+    cv.querySelectorAll('.bar,.bs-label').forEach(b=>b.remove());
+    arr.forEach((v,i)=>{
+      const b=document.createElement('div');b.className='bar';
+      if(found&&i===mid)b.classList.add('sorted');
+      else if(i===mid)b.classList.add('swapping');
+      else if(i>=lo&&i<=hi)b.classList.add('comparing');
+      b.style.cssText=`left:${i*(barW+2)}px;width:${barW}px;height:${Math.floor(v/arr[arr.length-1]*160)+20}px`;
+      const lbl=document.createElement('div');lbl.style.cssText=`position:absolute;bottom:-18px;width:${barW}px;text-align:center;font-size:7px;color:var(--dim)`;lbl.textContent=v;
+      b.appendChild(lbl);cv.appendChild(b);
+    });
+    const tl=document.createElement('div');tl.className='bs-label';tl.style.cssText='position:absolute;bottom:30px;left:0;font-size:9px;color:var(--dim)';
+    tl.textContent=`target: ${target}`;cv.appendChild(tl);
+  };
+  render(lo,hi,-1,false);
+  this._tick=()=>{
+    if(found||lo>hi){
+      if(lo>hi&&!found){log('err',`[BinSearch] target ${target} not found`);lo=0;hi=N-1;target=arr[Math.floor(Math.random()*N)];steps=0;}
+      else if(found){lo=0;hi=N-1;target=arr[Math.floor(Math.random()*N)];found=false;steps=0;}
+      render(lo,hi,-1,false);return;
+    }
+    const mid=Math.floor((lo+hi)/2);steps++;
+    if(arr[mid]===target){found=true;render(lo,hi,mid,true);log('ok',`[BinSearch] ✓ found ${target} at idx:${mid} in ${steps} steps`)}
+    else if(arr[mid]<target){log('info',`[BinSearch] arr[${mid}]=${arr[mid]} < ${target}, search right`);lo=mid+1;render(lo,hi,mid,false)}
+    else{log('info',`[BinSearch] arr[${mid}]=${arr[mid]} > ${target}, search left`);hi=mid-1;render(lo,hi,mid,false)}
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),700)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+];
+
+const tabsEl=document.getElementById('tabs');
+diagrams.forEach((d,i)=>{const t=document.createElement('div');t.className='tab';t.textContent=d.title;t.onclick=()=>show(i);tabsEl.appendChild(t)});
+function show(i){if(current!==null)diagrams[current].pause&&diagrams[current].pause();running=false;clearInterval(iid);current=i;document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.getElementById('dTitle').textContent=diagrams[i].title;document.getElementById('dDesc').textContent=diagrams[i].desc;diagrams[i].init()}
+document.getElementById('btnPlay').onclick=()=>{if(current!==null&&!running){diagrams[current].start();running=true;}};
+document.getElementById('btnPause').onclick=()=>{if(current!==null){diagrams[current].pause();running=false;}};
+document.getElementById('btnReset').onclick=()=>{if(current!==null){diagrams[current].reset();running=false;}};
+show(0);
+</script>
+</body>
+</html>

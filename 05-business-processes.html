@@ -1,0 +1,234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Business & Product — Flow Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c10;--panel:#0f1318;--border:#1e2530;--accent:#00d4aa;--purple:#7c6af7;--orange:#ff6b35;--yellow:#ffd166;--red:#ff4466;--blue:#4fc3f7;--text:#c8d8e8;--dim:#4a5568}
+body{background:var(--bg);font-family:'JetBrains Mono',monospace;color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,209,102,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,209,102,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+header{padding:20px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;z-index:1;position:relative}
+.back{font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.1em;transition:color .15s}.back:hover{color:var(--yellow)}
+header h1{font-size:13px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--yellow)}
+header span{font-size:10px;color:var(--dim)}
+.tabs{display:flex;border-bottom:1px solid var(--border);overflow-x:auto;z-index:1;position:relative;flex-shrink:0}
+.tab{font-size:10px;letter-spacing:.08em;padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;color:var(--dim);transition:all .15s;text-transform:uppercase}
+.tab:hover{color:var(--text)}.tab.active{color:var(--yellow);border-bottom-color:var(--yellow)}
+.workspace{flex:1;display:flex;flex-direction:column;z-index:1;position:relative}
+.diagram-info{padding:20px 32px 0;display:flex;gap:24px;align-items:baseline}
+.diagram-info h2{font-size:14px;font-weight:700;color:var(--text)}
+.diagram-info p{font-size:10px;color:var(--dim)}
+.controls{padding:12px 32px;display:flex;gap:10px;border-bottom:1px solid var(--border)}
+.btn{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 16px;border:1px solid;cursor:pointer;background:transparent;transition:all .15s}
+.btn-p{border-color:var(--yellow);color:var(--yellow)}.btn-p:hover{background:var(--yellow);color:var(--bg)}
+.btn-s{border-color:var(--dim);color:var(--dim)}.btn-s:hover{border-color:var(--text);color:var(--text)}
+.btn-r{border-color:var(--red);color:var(--red)}.btn-r:hover{background:var(--red);color:var(--bg)}
+.canvas{flex:1;padding:32px;min-height:320px;position:relative;overflow:hidden}
+.log{height:90px;overflow-y:auto;border-top:1px solid var(--border);padding:10px 32px;font-size:9px;line-height:1.9}
+.log::-webkit-scrollbar{width:3px}.log::-webkit-scrollbar-thumb{background:var(--dim)}
+.le{display:flex;gap:10px}.le .t{color:var(--dim);min-width:65px}.le.ok .m{color:var(--accent)}.le.warn .m{color:var(--yellow)}.le.err .m{color:var(--red)}.le.info .m{color:var(--blue)}
+.node{position:absolute;padding:8px 12px;border:1px solid;font-size:10px;text-align:center;transition:all .25s;white-space:nowrap}
+.ng{background:rgba(0,212,170,.07);border-color:rgba(0,212,170,.3);color:var(--accent)}
+.np{background:rgba(124,106,247,.07);border-color:rgba(124,106,247,.3);color:var(--purple)}
+.no{background:rgba(255,107,53,.07);border-color:rgba(255,107,53,.3);color:var(--orange)}
+.nb{background:rgba(79,195,247,.07);border-color:rgba(79,195,247,.3);color:var(--blue)}
+.ny{background:rgba(255,209,102,.07);border-color:rgba(255,209,102,.3);color:var(--yellow)}
+.nr{background:rgba(255,68,102,.07);border-color:rgba(255,68,102,.3);color:var(--red)}
+.node.active{filter:brightness(1.6);box-shadow:0 0 12px currentColor}
+.node .sub{font-size:8px;color:var(--dim);margin-top:2px}
+/* Funnel */
+.funnel-bar{position:absolute;height:36px;display:flex;align-items:center;padding:0 12px;font-size:10px;transition:width .5s ease;border-right:1px solid}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<header>
+  <a href="index.html" class="back">← hub</a>
+  <h1>Business &amp; Product</h1>
+  <span>// 5 animated flow diagrams</span>
+</header>
+<div class="tabs" id="tabs"></div>
+<div class="workspace">
+  <div class="diagram-info"><h2 id="dTitle"></h2><p id="dDesc"></p></div>
+  <div class="controls">
+    <button class="btn btn-p" id="btnPlay">▶ Start</button>
+    <button class="btn btn-s" id="btnPause">⏸ Pause</button>
+    <button class="btn btn-r" id="btnReset">↺ Reset</button>
+  </div>
+  <div class="canvas" id="canvas"></div>
+  <div class="log" id="log"></div>
+</div>
+<script>
+let current=null,iid=null,running=false;
+const logEl=document.getElementById('log'),canvas=document.getElementById('canvas');
+function ts(){const n=new Date();return`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`}
+function log(type,msg){const d=document.createElement('div');d.className=`le ${type}`;d.innerHTML=`<span class="t">${ts()}</span><span class="m">${msg}</span>`;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;while(logEl.children.length>40)logEl.removeChild(logEl.firstChild)}
+function clearLog(){logEl.innerHTML=''}
+function mkNode(x,y,w,label,sub,cls){const d=document.createElement('div');d.className=`node ${cls}`;d.style.cssText=`left:${x}px;top:${y}px;width:${w}px`;d.innerHTML=label+(sub?`<div class="sub">${sub}</div>`:'');canvas.appendChild(d);return d}
+
+const diagrams=[
+// 0: Order Lifecycle
+{title:'Order Lifecycle',desc:'Placed → Payment → Warehouse → Shipped → Delivered',
+init(){
+  canvas.innerHTML='';clearLog();
+  const stages=[
+    {l:'Order Placed',s:'cart checkout',c:'np'},
+    {l:'Payment',s:'stripe/paypal',c:'ny'},
+    {l:'Warehouse',s:'picking+pack',c:'nb'},
+    {l:'Shipped',s:'FedEx/UPS',c:'no'},
+    {l:'Delivered',s:'door delivery',c:'ng'},
+  ];
+  const cx=canvas.offsetWidth;
+  const gap=Math.floor((cx-40)/stages.length);
+  const els=stages.map((s,i)=>mkNode(20+i*gap,100,gap-20,s.l,s.s,s.c));
+  // progress dot
+  let orders=0;let cur=0;
+  const msgs=[
+    id=>`[Order #${id}] placed $${(Math.random()*200+10).toFixed(2)} cart:${Math.floor(Math.random()*5+1)} items`,
+    id=>`[Payment #${id}] authorized card ending 4242`,
+    id=>`[Warehouse] order #${id} picked and packed`,
+    id=>`[Shipping] order #${id} dispatched tracking:1Z${Math.random().toString(36).slice(2,8).toUpperCase()}`,
+    id=>`[Delivery] order #${id} ✓ delivered to customer`,
+  ];
+  this._tick=()=>{
+    els.forEach(e=>e.classList.remove('active'));
+    if(cur===0)orders++;
+    els[cur].classList.add('active');
+    log(cur===4?'ok':cur===1?'warn':'info',msgs[cur](orders));
+    cur=(cur+1)%stages.length;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 1: User Onboarding Funnel
+{title:'User Onboarding Funnel',desc:'Signup → verify → activate → retain — with dropoff rates',
+init(){
+  canvas.innerHTML='';clearLog();
+  const funnelStages=[
+    {label:'Visited',pct:100,color:'#4fc3f7'},
+    {label:'Signed Up',pct:60,color:'#7c6af7'},
+    {label:'Verified Email',pct:40,color:'#ffd166'},
+    {label:'Onboarded',pct:25,color:'#ff6b35'},
+    {label:'Retained D7',pct:12,color:'#00d4aa'},
+  ];
+  const cx=canvas.offsetWidth-80;
+  funnelStages.forEach((s,i)=>{
+    const w=Math.floor(cx*s.pct/100);
+    const bar=document.createElement('div');
+    bar.className='funnel-bar';
+    bar.style.cssText=`left:40px;top:${20+i*54}px;width:${w}px;background:${s.color}18;border-color:${s.color}55;color:${s.color}`;
+    bar.textContent=s.label;
+    const pct=document.createElement('span');pct.style.cssText='margin-left:auto;font-size:8px;opacity:.7';pct.textContent=s.pct+'%';
+    bar.appendChild(pct);canvas.appendChild(bar);
+  });
+  let users=10000;
+  this._tick=()=>{
+    users+=Math.floor(Math.random()*500+100);
+    const dropoffs=['',`${Math.floor(users*.4)} dropped off (no verify)`,'',`${Math.floor(users*.15)} churned (no aha moment)`,''];
+    const si=Math.floor(Math.random()*5);
+    log(si===4?'ok':si===3?'warn':'info',`[Funnel] ${funnelStages[si].label}: ${Math.floor(users*funnelStages[si].pct/100)} users`);
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1100)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 2: Git Flow
+{title:'Git Branching Flow',desc:'feature → PR → review → merge → release cycle',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const main=mkNode(cx/2-60,20,120,'main','production','ng');
+  const develop=mkNode(cx/2-60,100,120,'develop','integration','nb');
+  const feat1=mkNode(40,180,130,'feature/auth','in-progress','np');
+  const feat2=mkNode(cx/2-65,180,130,'feature/ui','in-progress','np');
+  const feat3=mkNode(cx-170,180,130,'hotfix/bug','urgent','nr');
+  const pr=mkNode(cx/2-60,270,130,'Pull Request','open for review','ny');
+  const nodes=[main,develop,feat1,feat2,feat3,pr];
+  const events=[
+    ()=>{feat1.classList.add('active');setTimeout(()=>feat1.classList.remove('active'),400);log('info','[Git] commit: feat/auth add JWT validation')},
+    ()=>{feat2.classList.add('active');setTimeout(()=>feat2.classList.remove('active'),400);log('info','[Git] commit: feat/ui redesign dashboard components')},
+    ()=>{pr.classList.add('active');setTimeout(()=>pr.classList.remove('active'),400);log('warn','[PR #42] feat/auth → develop opened for review')},
+    ()=>{develop.classList.add('active');setTimeout(()=>develop.classList.remove('active'),400);log('ok','[Merge] feat/auth merged into develop ✓')},
+    ()=>{feat3.classList.add('active');setTimeout(()=>feat3.classList.remove('active'),400);log('err','[Hotfix] critical bug in prod → hotfix/v1.2.1')},
+    ()=>{main.classList.add('active');setTimeout(()=>main.classList.remove('active'),400);log('ok','[Release] v1.2.1 tagged and deployed to production')},
+  ];
+  let si=0;
+  this._tick=()=>{events[si%events.length]();si++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 3: Incident Management
+{title:'Incident Management',desc:'Alert → triage → escalation → resolution → postmortem',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const alert=mkNode(30,130,90,'Alert','PagerDuty','nr');
+  const triage=mkNode(cx/5,130,90,'Triage','on-call eng','ny');
+  const escalate=mkNode(cx/5*2,130,100,'Escalate','eng lead','no');
+  const mitigate=mkNode(cx/5*3,130,100,'Mitigate','rollback/fix','nb');
+  const resolve=mkNode(cx/5*4,130,100,'Resolve','verify+close','ng');
+  const severity=['SEV1','SEV2','SEV3'];const colors=['err','warn','info'];
+  let incidents=0;
+  const stages_=[alert,triage,escalate,mitigate,resolve];
+  let si=0,incId=0;
+  this._tick=()=>{
+    stages_.forEach(s=>s.classList.remove('active'));stages_[si].classList.add('active');
+    if(si===0){incidents++;incId=Math.floor(Math.random()*9000+1000);const sev=severity[Math.floor(Math.random()*3)];log(colors[severity.indexOf(sev)],`[${sev}] INC-${incId} error_rate >5% latency_p99 >2s`)}
+    else if(si===1){log('warn',`[INC-${incId}] on-call acknowledged, investigating`)}
+    else if(si===2){log('warn',`[INC-${incId}] escalated to eng lead + stakeholders`)}
+    else if(si===3){log('info',`[INC-${incId}] mitigation: reverted bad deploy`)}
+    else{log('ok',`[INC-${incId}] resolved ✓ MTTR:${Math.floor(Math.random()*40+5)}min`)}
+    si=(si+1)%stages_.length;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 4: A/B Test
+{title:'A/B Test Traffic Split',desc:'Traffic split → variant assignment → conversion tracking',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const traffic=mkNode(cx/2-60,20,120,'Traffic','100% users','nb');
+  const split=mkNode(cx/2-60,100,120,'Splitter','50/50 random','ny');
+  const varA=mkNode(80,200,130,'Variant A','control (old)','np');
+  const varB=mkNode(cx-210,200,130,'Variant B','treatment (new)','no');
+  const results=mkNode(cx/2-80,290,160,'Analytics','conversion tracking','ng');
+  let convA=0,convB=0,totalA=0,totalB=0;
+  const statEl=document.createElement('div');statEl.style.cssText='position:absolute;bottom:20px;left:20px;font-size:9px;line-height:2';canvas.appendChild(statEl);
+  const upd=()=>{const ra=totalA?((convA/totalA)*100).toFixed(1):0,rb=totalB?((convB/totalB)*100).toFixed(1):0;statEl.innerHTML=`A convert: <span style="color:var(--purple)">${ra}%</span>  B convert: <span style="color:var(--orange)">${rb}%</span>`};
+  this._tick=()=>{
+    const isB=Math.random()>.5;
+    split.classList.add('active');setTimeout(()=>split.classList.remove('active'),200);
+    (isB?varB:varA).classList.add('active');setTimeout(()=>{varA.classList.remove('active');varB.classList.remove('active')},300);
+    const converted=Math.random()<(isB?.12:.08);
+    if(isB){totalB++;if(converted){convB++;results.classList.add('active');setTimeout(()=>results.classList.remove('active'),300)}}
+    else{totalA++;if(converted){convA++;results.classList.add('active');setTimeout(()=>results.classList.remove('active'),300)}}
+    if(converted)log('ok',`[Variant ${isB?'B':'A'}] conversion event user:${Math.floor(Math.random()*9999)}`);
+    else log('info',`[Variant ${isB?'B':'A'}] visit, no conversion`);
+    upd();
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),600)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+];
+
+const tabsEl=document.getElementById('tabs');
+diagrams.forEach((d,i)=>{const t=document.createElement('div');t.className='tab';t.textContent=d.title;t.onclick=()=>show(i);tabsEl.appendChild(t)});
+function show(i){if(current!==null)diagrams[current].pause&&diagrams[current].pause();running=false;clearInterval(iid);current=i;document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.getElementById('dTitle').textContent=diagrams[i].title;document.getElementById('dDesc').textContent=diagrams[i].desc;diagrams[i].init()}
+document.getElementById('btnPlay').onclick=()=>{if(current!==null&&!running){diagrams[current].start();running=true;}};
+document.getElementById('btnPause').onclick=()=>{if(current!==null){diagrams[current].pause();running=false;}};
+document.getElementById('btnReset').onclick=()=>{if(current!==null){diagrams[current].reset();running=false;}};
+show(0);
+</script>
+</body>
+</html>
