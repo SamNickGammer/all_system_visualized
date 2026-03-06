@@ -28,6 +28,7 @@ header span{font-size:10px;color:var(--dim)}
 .canvas{flex:1;padding:32px;min-height:320px;position:relative;overflow:hidden}
 .log{height:90px;overflow-y:auto;border-top:1px solid var(--border);padding:10px 32px;font-size:9px;line-height:1.9;color:var(--dim)}
 .log::-webkit-scrollbar{width:3px}.log::-webkit-scrollbar-thumb{background:var(--dim)}
+.log-resize{height:7px;cursor:ns-resize;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:background .15s;z-index:2;position:relative}.log-resize:hover,.log-resize.dragging{background:rgba(79,195,247,.1)}.log-resize::after{content:'';width:36px;height:2px;border-radius:1px;background:var(--dim);opacity:.35;transition:opacity .15s}.log-resize:hover::after,.log-resize.dragging::after{opacity:.9}
 .le{display:flex;gap:10px}.le .t{color:var(--dim);min-width:65px}.le.ok .m{color:var(--accent)}.le.warn .m{color:var(--yellow)}.le.err .m{color:var(--red)}.le.info .m{color:var(--blue)}
 .node{position:absolute;padding:8px 12px;border:1px solid;font-size:10px;text-align:center;transition:all .25s;white-space:nowrap}
 .node-green{background:rgba(0,212,170,.07);border-color:rgba(0,212,170,.3);color:var(--accent)}
@@ -58,6 +59,7 @@ header span{font-size:10px;color:var(--dim)}
     <button class="btn btn-r" id="btnReset">↺ Reset</button>
   </div>
   <div class="canvas" id="canvas"></div>
+  <div class="log-resize" id="logResize"></div>
   <div class="log" id="log"></div>
 </div>
 <script>
@@ -319,6 +321,18 @@ function show(i){if(current!==null)diagrams[current].pause&&diagrams[current].pa
 document.getElementById('btnPlay').onclick=()=>{if(current!==null&&!running){diagrams[current].start();running=true;}};
 document.getElementById('btnPause').onclick=()=>{if(current!==null){diagrams[current].pause();running=false;}};
 document.getElementById('btnReset').onclick=()=>{if(current!==null){diagrams[current].reset();running=false;}};
+// Resizable log panel
+(function(){
+  const h=document.getElementById('logResize'),l=document.getElementById('log');
+  let d=false,sy=0,sh=0;
+  h.addEventListener('mousedown',function(e){d=true;sy=e.clientY;sh=l.offsetHeight;h.classList.add('dragging');document.body.style.cursor='ns-resize';document.body.style.userSelect='none';e.preventDefault()});
+  document.addEventListener('mousemove',function(e){if(!d)return;l.style.height=Math.max(40,Math.min(window.innerHeight*.6,sh+(sy-e.clientY)))+'px'});
+  document.addEventListener('mouseup',function(){if(!d)return;d=false;h.classList.remove('dragging');document.body.style.cursor='';document.body.style.userSelect=''});
+  h.addEventListener('touchstart',function(e){d=true;sy=e.touches[0].clientY;sh=l.offsetHeight;h.classList.add('dragging');e.preventDefault()},{passive:false});
+  document.addEventListener('touchmove',function(e){if(!d)return;l.style.height=Math.max(40,Math.min(window.innerHeight*.6,sh+(sy-e.touches[0].clientY)))+'px'});
+  document.addEventListener('touchend',function(){if(!d)return;d=false;h.classList.remove('dragging')});
+})();
+
 show(0);
 </script>
 </body>
