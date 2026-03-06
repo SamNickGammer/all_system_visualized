@@ -10,7 +10,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: 'All Systems Visualized',
-  description: '54 animated flow diagrams across 9 categories — distributed systems, networking, data pipelines, web architecture, business processes, algorithms, DevOps, databases & auth',
+  description: '75 animated flow diagrams across 9 categories — distributed systems, networking, data pipelines, web architecture, business processes, algorithms, DevOps, databases & auth',
 };
 
 export default function RootLayout({

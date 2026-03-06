@@ -13,7 +13,7 @@ export default function Home() {
           All Systems Visualized
         </h1>
         <p style={{ fontSize: 12, color: 'var(--dim)', marginTop: 8, letterSpacing: '.08em' }}>
-          54 animated flow diagrams across 9 categories — distributed systems, networking, data pipelines, web architecture, business processes, algorithms, DevOps, databases &amp; auth
+          75 animated flow diagrams across 9 categories — distributed systems, networking, data pipelines, web architecture, business processes, algorithms, DevOps, databases &amp; auth
         </p>
       </header>
 

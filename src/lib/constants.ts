@@ -61,8 +61,8 @@ export const CATEGORIES: CategoryMeta[] = [
   {
     slug: 'algorithms-cs',
     title: 'Algorithms & CS',
-    description: 'Sorting, BFS/DFS, consistent hashing, Raft consensus, rate limiter, binary search, Dijkstra, LRU cache, Bloom filter, and Merkle tree.',
-    tags: ['Sorting', 'BFS/DFS', 'Hashing', 'Raft', 'Dijkstra', 'LRU', 'Bloom Filter', 'Merkle Tree'],
+    description: 'Sorting (bubble, quick, merge), graph traversal (BFS, DFS, Dijkstra, A*), data structures (BST, heap, hash table, linked list, stack, queue), and techniques (sliding window, two pointers, dynamic programming).',
+    tags: ['Sorting', 'BFS/DFS', 'A*', 'Dijkstra', 'BST', 'Heap', 'Hash Table', 'Linked List', 'DP', 'Sliding Window'],
     accent: { color: COLORS.orange, rgb: '255,107,53', cssVar: 'var(--orange)' },
     cardClass: 'c5',
   },

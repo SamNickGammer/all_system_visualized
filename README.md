@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="https://img.shields.io/badge/diagrams-63-00d4aa?style=flat-square&labelColor=0a0c10" />
+  <img src="https://img.shields.io/badge/diagrams-75-00d4aa?style=flat-square&labelColor=0a0c10" />
   <img src="https://img.shields.io/badge/categories-9-7c6af7?style=flat-square&labelColor=0a0c10" />
   <img src="https://img.shields.io/badge/Next.js-16-000?style=flat-square&logo=nextdotjs&logoColor=white" />
   <img src="https://img.shields.io/badge/TypeScript-5-3178C6?style=flat-square&logo=typescript&logoColor=white" />
@@ -9,7 +9,7 @@
 <h1 align="center">All Systems Visualized</h1>
 
 <p align="center">
-  <strong>63 interactive, animated flow diagrams</strong> covering the systems, protocols, and algorithms that power modern software — from Kafka topics to Merkle trees, TCP handshakes to Raft consensus.
+  <strong>75 interactive, animated flow diagrams</strong> covering the systems, protocols, and algorithms that power modern software — from Kafka topics to Merkle trees, TCP handshakes to Raft consensus.
 </p>
 
 <p align="center">
@@ -54,7 +54,7 @@
 | 3 | **Data & ML Pipelines** | 8 | ETL, Spark Streaming, ML Training, RAG, Feature Store, Medallion, Vector DB, Model Serving |
 | 4 | **App & Web Architecture** | 8 | HTTP Lifecycle, React Rendering, GraphQL, Cache Hierarchy, WebSocket vs REST, SSR/CSR/SSG, Service Worker, Event Loop |
 | 5 | **Business & Product** | 5 | Order Lifecycle, Onboarding Funnel, Git Flow, Incident Management, A/B Testing |
-| 6 | **Algorithms & CS** | 10 | Bubble Sort, BFS, Consistent Hashing, Raft Consensus, Token Bucket, Binary Search, Dijkstra, LRU Cache, Bloom Filter, Merkle Tree |
+| 6 | **Algorithms & CS** | 22 | Bubble Sort, Quick Sort, Merge Sort, BFS, DFS, Dijkstra, A* Pathfinding, Binary Search, Consistent Hashing, Raft Consensus, Token Bucket, LRU Cache, Bloom Filter, Merkle Tree, Hash Table, BST, Min-Heap, Stack & Queue, Linked List, Sliding Window, Two Pointers, Dynamic Programming |
 | 7 | **DevOps & Cloud** | 5 | Terraform, Docker Lifecycle, Istio Mesh, Serverless Cold Start, Blue/Green Deploy |
 | 8 | **Databases & Storage** | 5 | B-Tree Index, MVCC, Write-Ahead Log, Sharding, Connection Pooling |
 | 9 | **Auth & Identity** | 4 | JWT Lifecycle, SAML SSO, RBAC, Certificate Chain |
