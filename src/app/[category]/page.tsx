@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import { notFound } from 'next/navigation';
 import { CATEGORIES } from '@/lib/constants';
 import DiagramWorkspace from '@/components/DiagramWorkspace';
@@ -39,12 +40,14 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
             linear-gradient(90deg, rgba(${cat!.accent.rgb},.03) 1px, transparent 1px) !important;
         }
       `}</style>
-      <DiagramWorkspace
-        title={cat!.title}
-        categorySlug={category}
-        accent={cat!.accent}
-        accentRgb={cat!.accent.rgb}
-      />
+      <Suspense>
+        <DiagramWorkspace
+          title={cat!.title}
+          categorySlug={category}
+          accent={cat!.accent}
+          accentRgb={cat!.accent.rgb}
+        />
+      </Suspense>
     </div>
   );
 }

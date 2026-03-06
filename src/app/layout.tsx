@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { JetBrains_Mono } from 'next/font/google';
+import GlobalSearch from '@/components/GlobalSearch';
 import './globals.css';
 
 const jetbrainsMono = JetBrains_Mono({
@@ -22,6 +23,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={jetbrainsMono.className}>
         <div className="grid-bg" />
+        <GlobalSearch />
         {children}
       </body>
     </html>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import type { DiagramInstance, LogEntry, LogType } from '@/lib/types';
 import type { AccentTheme } from '@/lib/types';
@@ -18,7 +19,16 @@ interface DiagramWorkspaceProps {
 
 export default function DiagramWorkspace({ title, categorySlug, accent, accentRgb }: DiagramWorkspaceProps) {
   const diagrams = getDiagramsByCategory(categorySlug);
-  const [activeTab, setActiveTab] = useState(0);
+  const searchParams = useSearchParams();
+  const initialTab = (() => {
+    const t = searchParams.get('tab');
+    if (t !== null) {
+      const n = parseInt(t, 10);
+      if (!isNaN(n) && n >= 0 && n < diagrams.length) return n;
+    }
+    return 0;
+  })();
+  const [activeTab, setActiveTab] = useState(initialTab);
   const [logEntries, setLogEntries] = useState<LogEntry[]>([]);
   const [running, setRunning] = useState(false);
 

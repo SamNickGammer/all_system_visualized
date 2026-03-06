@@ -27,3 +27,32 @@ const diagramMap: Record<string, DiagramDef[]> = {
 export function getDiagramsByCategory(slug: string): DiagramDef[] {
   return diagramMap[slug] ?? [];
 }
+
+/** Searchable entry for global search */
+export interface DiagramSearchEntry {
+  title: string;
+  desc: string;
+  categorySlug: string;
+  categoryTitle: string;
+  diagramIndex: number;
+}
+
+/**
+ * Returns a flat list of all diagrams across all categories for search.
+ */
+export function getAllDiagramEntries(): DiagramSearchEntry[] {
+  const entries: DiagramSearchEntry[] = [];
+  for (const [slug, diagrams] of Object.entries(diagramMap)) {
+    const catTitle = slug.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
+    diagrams.forEach((d, i) => {
+      entries.push({
+        title: d.title,
+        desc: d.desc,
+        categorySlug: slug,
+        categoryTitle: catTitle,
+        diagramIndex: i,
+      });
+    });
+  }
+  return entries;
+}
