@@ -32,6 +32,9 @@ header p{font-size:12px;color:var(--dim);margin-top:8px;letter-spacing:.08em}
 .c3 h2{color:#f06292}       .c3::before{background:rgba(240,98,146,.03)}
 .c4 h2{color:var(--yellow)} .c4::before{background:rgba(255,209,102,.03)}
 .c5 h2{color:var(--orange)} .c5::before{background:rgba(255,107,53,.03)}
+.c6 h2{color:var(--orange)} .c6::before{background:rgba(255,107,53,.03)}
+.c7 h2{color:var(--purple)} .c7::before{background:rgba(124,106,247,.03)}
+.c8 h2{color:var(--red)}    .c8::before{background:rgba(255,68,102,.03)}
 footer{padding:24px 60px;border-top:1px solid var(--border);font-size:10px;color:var(--dim);letter-spacing:.08em}
 </style>
 </head>
@@ -40,58 +43,82 @@ footer{padding:24px 60px;border-top:1px solid var(--border);font-size:10px;color
 <header>
   <div class="subtitle">// interactive flow diagrams</div>
   <h1>All Systems Visualized</h1>
-  <p>35 animated flow diagrams across 6 categories — distributed systems, networking, data pipelines, web architecture, business processes & algorithms</p>
+  <p>54 animated flow diagrams across 9 categories — distributed systems, networking, data pipelines, web architecture, business processes, algorithms, DevOps, databases & auth</p>
 </header>
 <div class="grid">
   <a href="01-distributed-systems.html" class="card c0">
-    <div class="card-num">07 diagrams</div>
-    <div class="card-icon">⬡</div>
+    <div class="card-num">10 diagrams</div>
+    <div class="card-icon">&#11045;</div>
     <h2>Distributed Systems</h2>
-    <p>Kafka, load balancers, CDN routing, Kubernetes scheduling, database replication, microservices, and CI/CD pipelines.</p>
-    <div class="card-tags"><span class="tag">Kafka</span><span class="tag">Load Balancer</span><span class="tag">CDN</span><span class="tag">K8s</span><span class="tag">DB Replication</span><span class="tag">CI/CD</span></div>
-    <div class="card-arrow">→</div>
+    <p>Kafka, load balancers, CDN routing, Kubernetes scheduling, database replication, microservices, CI/CD, event sourcing, circuit breaker, and saga pattern.</p>
+    <div class="card-tags"><span class="tag">Kafka</span><span class="tag">Load Balancer</span><span class="tag">CDN</span><span class="tag">K8s</span><span class="tag">CI/CD</span><span class="tag">CQRS</span><span class="tag">Circuit Breaker</span><span class="tag">Saga</span></div>
+    <div class="card-arrow">&rarr;</div>
   </a>
   <a href="02-networking-security.html" class="card c1">
-    <div class="card-num">05 diagrams</div>
-    <div class="card-icon">⬡</div>
+    <div class="card-num">08 diagrams</div>
+    <div class="card-icon">&#11045;</div>
     <h2>Networking &amp; Security</h2>
-    <p>TCP handshake, DNS resolution chain, OAuth2 auth flow, firewall packet filtering, and VPN tunnel encryption.</p>
-    <div class="card-tags"><span class="tag">TCP</span><span class="tag">DNS</span><span class="tag">OAuth2</span><span class="tag">Firewall</span><span class="tag">VPN</span></div>
-    <div class="card-arrow">→</div>
+    <p>TCP handshake, DNS resolution, OAuth2 auth flow, firewall filtering, VPN tunnel, TLS 1.3 handshake, BGP routing, and mTLS.</p>
+    <div class="card-tags"><span class="tag">TCP</span><span class="tag">DNS</span><span class="tag">OAuth2</span><span class="tag">Firewall</span><span class="tag">VPN</span><span class="tag">TLS 1.3</span><span class="tag">BGP</span><span class="tag">mTLS</span></div>
+    <div class="card-arrow">&rarr;</div>
   </a>
   <a href="03-data-ml-pipelines.html" class="card c2">
-    <div class="card-num">05 diagrams</div>
-    <div class="card-icon">⬡</div>
+    <div class="card-num">08 diagrams</div>
+    <div class="card-icon">&#11045;</div>
     <h2>Data &amp; ML Pipelines</h2>
-    <p>ETL pipeline, Spark data streaming, ML training loop, RAG pipeline, and feature store architecture.</p>
-    <div class="card-tags"><span class="tag">ETL</span><span class="tag">Spark</span><span class="tag">ML Training</span><span class="tag">RAG</span><span class="tag">Feature Store</span></div>
-    <div class="card-arrow">→</div>
+    <p>ETL pipeline, Spark streaming, ML training loop, RAG pipeline, feature store, medallion architecture, vector DB search, and model serving.</p>
+    <div class="card-tags"><span class="tag">ETL</span><span class="tag">Spark</span><span class="tag">ML Training</span><span class="tag">RAG</span><span class="tag">Medallion</span><span class="tag">Vector DB</span><span class="tag">Model Serving</span></div>
+    <div class="card-arrow">&rarr;</div>
   </a>
   <a href="04-app-web-architecture.html" class="card c3">
-    <div class="card-num">05 diagrams</div>
-    <div class="card-icon">⬡</div>
+    <div class="card-num">08 diagrams</div>
+    <div class="card-icon">&#11045;</div>
     <h2>App &amp; Web Architecture</h2>
-    <p>HTTP request lifecycle, React rendering cycle, GraphQL resolver chain, cache hierarchy, and WebSocket vs REST.</p>
-    <div class="card-tags"><span class="tag">HTTP</span><span class="tag">React</span><span class="tag">GraphQL</span><span class="tag">Cache</span><span class="tag">WebSocket</span></div>
-    <div class="card-arrow">→</div>
+    <p>HTTP request lifecycle, React rendering, GraphQL resolvers, cache hierarchy, WebSocket vs REST, SSR/CSR/SSG, service workers, and event loop.</p>
+    <div class="card-tags"><span class="tag">HTTP</span><span class="tag">React</span><span class="tag">GraphQL</span><span class="tag">Cache</span><span class="tag">SSR/CSR/SSG</span><span class="tag">Event Loop</span></div>
+    <div class="card-arrow">&rarr;</div>
   </a>
   <a href="05-business-processes.html" class="card c4">
     <div class="card-num">05 diagrams</div>
-    <div class="card-icon">⬡</div>
+    <div class="card-icon">&#11045;</div>
     <h2>Business &amp; Product</h2>
     <p>Order lifecycle, user onboarding funnel, Git branching flow, incident management, and A/B test traffic split.</p>
     <div class="card-tags"><span class="tag">Order Flow</span><span class="tag">Onboarding</span><span class="tag">Git Flow</span><span class="tag">Incidents</span><span class="tag">A/B Test</span></div>
-    <div class="card-arrow">→</div>
+    <div class="card-arrow">&rarr;</div>
   </a>
   <a href="06-algorithms-cs.html" class="card c5">
-    <div class="card-num">06 diagrams</div>
-    <div class="card-icon">⬡</div>
+    <div class="card-num">10 diagrams</div>
+    <div class="card-icon">&#11045;</div>
     <h2>Algorithms &amp; CS</h2>
-    <p>Sorting algorithms, BFS/DFS graph traversal, consistent hashing ring, Raft consensus, rate limiter, and binary search.</p>
-    <div class="card-tags"><span class="tag">Sorting</span><span class="tag">BFS/DFS</span><span class="tag">Hashing</span><span class="tag">Raft</span><span class="tag">Rate Limit</span></div>
-    <div class="card-arrow">→</div>
+    <p>Sorting, BFS/DFS, consistent hashing, Raft consensus, rate limiter, binary search, Dijkstra, LRU cache, Bloom filter, and Merkle tree.</p>
+    <div class="card-tags"><span class="tag">Sorting</span><span class="tag">BFS/DFS</span><span class="tag">Hashing</span><span class="tag">Raft</span><span class="tag">Dijkstra</span><span class="tag">LRU</span><span class="tag">Bloom Filter</span><span class="tag">Merkle Tree</span></div>
+    <div class="card-arrow">&rarr;</div>
+  </a>
+  <a href="07-devops-cloud.html" class="card c6">
+    <div class="card-num">05 diagrams</div>
+    <div class="card-icon">&#11045;</div>
+    <h2>DevOps &amp; Cloud</h2>
+    <p>Terraform plan/apply, Docker container lifecycle, Istio service mesh, serverless cold start, and blue/green deployments.</p>
+    <div class="card-tags"><span class="tag">Terraform</span><span class="tag">Docker</span><span class="tag">Istio</span><span class="tag">Serverless</span><span class="tag">Blue/Green</span></div>
+    <div class="card-arrow">&rarr;</div>
+  </a>
+  <a href="08-databases-storage.html" class="card c7">
+    <div class="card-num">05 diagrams</div>
+    <div class="card-icon">&#11045;</div>
+    <h2>Databases &amp; Storage</h2>
+    <p>B-Tree index lookup, MVCC concurrency control, write-ahead log, sharding strategies, and connection pooling.</p>
+    <div class="card-tags"><span class="tag">B-Tree</span><span class="tag">MVCC</span><span class="tag">WAL</span><span class="tag">Sharding</span><span class="tag">Conn Pool</span></div>
+    <div class="card-arrow">&rarr;</div>
+  </a>
+  <a href="09-auth-identity.html" class="card c8">
+    <div class="card-num">04 diagrams</div>
+    <div class="card-icon">&#11045;</div>
+    <h2>Auth &amp; Identity</h2>
+    <p>JWT token lifecycle, SAML SSO flow, RBAC access control, and certificate chain validation.</p>
+    <div class="card-tags"><span class="tag">JWT</span><span class="tag">SAML</span><span class="tag">RBAC</span><span class="tag">Cert Chain</span></div>
+    <div class="card-arrow">&rarr;</div>
   </a>
 </div>
-<footer>// 35 interactive animated flow diagrams · open each file to explore</footer>
+<footer>// 54 interactive animated flow diagrams &middot; open each file to explore</footer>
 </body>
 </html>

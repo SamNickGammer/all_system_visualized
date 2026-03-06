@@ -48,7 +48,7 @@ header span{font-size:10px;color:var(--dim)}
 <header>
   <a href="index.html" class="back">← hub</a>
   <h1>Data &amp; ML Pipelines</h1>
-  <span>// 5 animated flow diagrams</span>
+  <span>// 8 animated flow diagrams</span>
 </header>
 <div class="tabs" id="tabs"></div>
 <div class="workspace">
@@ -208,6 +208,94 @@ init(){
   };
 },
 start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),850)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 5: Data Lake Medallion Architecture
+{title:'Medallion Architecture',desc:'Bronze (raw) → Silver (cleaned) → Gold (aggregated) data lake tiers',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const gap=Math.floor((cx-40)/4);
+  const sources=mkNode(20,100,gap-10,'Raw Sources','kafka/s3/api','node-blue');
+  const bronze=mkNode(20+gap,100,gap-10,'Bronze','raw ingestion','node-orange');
+  const silver=mkNode(20+gap*2,100,gap-10,'Silver','cleaned/validated','node-yellow');
+  const gold=mkNode(20+gap*3,100,gap-10,'Gold','business-ready','node-green');
+  const stages=[sources,bronze,silver,gold];
+  let si=0;const counts={bronze:0,silver:0,gold:0};
+  const statEl=document.createElement('div');statEl.style.cssText='position:absolute;bottom:20px;left:20px;font-size:9px;line-height:2';canvas.appendChild(statEl);
+  const upd=()=>{statEl.innerHTML=`bronze: <span style="color:var(--orange)">${counts.bronze}k</span>  silver: <span style="color:var(--yellow)">${counts.silver}k</span>  gold: <span style="color:var(--accent)">${counts.gold}k</span>`};
+  upd();
+  this._tick=()=>{
+    stages.forEach(s=>s.classList.remove('active'));stages[si].classList.add('active');
+    const batch=Math.floor(Math.random()*50+10);
+    if(si===0)log('info',`[Sources] ${batch}k events from kafka + S3 logs`);
+    else if(si===1){counts.bronze+=batch;log('info',`[Bronze] ingested ${batch}k raw events (schema-on-read)`)}
+    else if(si===2){const reject=Math.floor(Math.random()*3);counts.silver+=batch-reject;log('info',`[Silver] deduplicated + validated → ${batch-reject}k rows (${reject}k rejected)`)}
+    else{counts.gold+=Math.floor(batch/3);log('ok',`[Gold] aggregated metrics materialized for dashboards ✓`)}
+    upd();si=(si+1)%stages.length;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 6: Vector DB Similarity Search
+{title:'Vector DB Search',desc:'Query → embed → ANN search → re-rank → results',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const query=mkNode(20,120,90,'Query Text','natural lang','node-purple');
+  const embed=mkNode(140,120,110,'Embedder','text→vec','node-blue');
+  const vdb=mkNode(cx/2-50,60,110,'Vector DB','1M vectors','node-yellow');
+  const topk=mkNode(cx/2-50,190,110,'Top-K','candidates','node-orange');
+  const rerank=mkNode(cx-250,120,120,'Re-ranker','cross-encoder','node-purple');
+  const results=mkNode(cx-120,120,100,'Results','top 3','node-green');
+  const steps=[
+    ()=>{query.classList.add('active');embed.classList.add('active');setTimeout(()=>{query.classList.remove('active');embed.classList.remove('active')},400);log('info','[Embed] "How to reset password?" → vector dim:1536')},
+    ()=>{vdb.classList.add('active');setTimeout(()=>vdb.classList.remove('active'),400);const scanned=Math.floor(Math.random()*500+500);log('info',`[ANN] HNSW search scanned ${scanned} candidates from 1M vectors`)},
+    ()=>{topk.classList.add('active');setTimeout(()=>topk.classList.remove('active'),400);const sim=(0.7+Math.random()*.25).toFixed(3);log('info',`[Top-K] 10 candidates, best similarity: ${sim}`)},
+    ()=>{rerank.classList.add('active');setTimeout(()=>rerank.classList.remove('active'),400);log('info','[Rerank] cross-encoder scoring 10 candidates')},
+    ()=>{results.classList.add('active');setTimeout(()=>results.classList.remove('active'),400);const lat=Math.floor(Math.random()*20+5);log('ok',`[Results] top 3 returned in ${lat}ms ✓`)},
+  ];
+  let si=0;
+  this._tick=()=>{steps[si%steps.length]();si++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 7: Model Serving (Batch vs Real-time)
+{title:'Model Serving',desc:'Side-by-side: batch inference (Spark) vs real-time inference (API)',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;const half=cx/2-20;
+  const lbl1=document.createElement('div');lbl1.style.cssText='position:absolute;left:20px;top:5px;font-size:9px;color:var(--blue);letter-spacing:.12em;text-transform:uppercase';lbl1.textContent='Batch Inference';canvas.appendChild(lbl1);
+  const lbl2=document.createElement('div');lbl2.style.cssText=`position:absolute;left:${half+30}px;top:5px;font-size:9px;color:var(--accent);letter-spacing:.12em;text-transform:uppercase`;lbl2.textContent='Real-time Inference';canvas.appendChild(lbl2);
+  const div=document.createElement('div');div.style.cssText=`position:absolute;left:${half+10}px;top:0;bottom:0;width:1px;background:var(--border)`;canvas.appendChild(div);
+  const batchSrc=mkNode(20,60,half/2-10,'Data Lake','100k records','node-blue');
+  const batchJob=mkNode(20+half/2,60,half/2-10,'Spark Job','batch predict','node-yellow');
+  const batchOut=mkNode(20,150,half-10,'Predictions Table','dashboard ready','node-green');
+  const rtReq=mkNode(half+20,60,half/2-10,'API Request','POST /predict','node-purple');
+  const rtModel=mkNode(half+20+half/2,60,half/2-10,'Model Server','TF Serving','node-orange');
+  const rtResp=mkNode(half+20,150,half-10,'Response','{score: 0.87}','node-green');
+  let tick=0;
+  this._tick=()=>{
+    tick++;
+    // Batch side
+    if(tick%2===0){
+      batchSrc.classList.add('active');batchJob.classList.add('active');setTimeout(()=>{batchSrc.classList.remove('active');batchJob.classList.remove('active')},300);
+      const rows=Math.floor(Math.random()*50+20);log('info',`[Batch] processing ${rows}k records ETA:${Math.floor(Math.random()*5+2)}min`);
+      if(tick%4===0){batchOut.classList.add('active');setTimeout(()=>batchOut.classList.remove('active'),300);log('ok','[Batch] predictions written to table ✓')}
+    }
+    // RT side
+    rtReq.classList.add('active');rtModel.classList.add('active');setTimeout(()=>{rtReq.classList.remove('active');rtModel.classList.remove('active')},200);
+    const lat=Math.floor(Math.random()*15+5);const score=(Math.random()*.5+.5).toFixed(2);
+    rtResp.classList.add('active');setTimeout(()=>rtResp.classList.remove('active'),200);
+    log('ok',`[Realtime] inference lat:${lat}ms → {score: ${score}}`);
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
 pause(){clearInterval(iid);running=false},
 reset(){clearInterval(iid);running=false;this.init()}},
 ];

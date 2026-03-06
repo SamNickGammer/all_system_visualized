@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Auth & Identity — Flow Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c10;--panel:#0f1318;--border:#1e2530;--accent:#00d4aa;--purple:#7c6af7;--orange:#ff6b35;--yellow:#ffd166;--red:#ff4466;--blue:#4fc3f7;--text:#c8d8e8;--dim:#4a5568}
+body{background:var(--bg);font-family:'JetBrains Mono',monospace;color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,68,102,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,68,102,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+header{padding:20px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;z-index:1;position:relative}
+.back{font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.1em;transition:color .15s}.back:hover{color:var(--red)}
+header h1{font-size:13px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--red)}
+header span{font-size:10px;color:var(--dim)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;z-index:1;position:relative;flex-shrink:0}
+.tab{font-size:10px;letter-spacing:.08em;padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;color:var(--dim);transition:all .15s;text-transform:uppercase}
+.tab:hover{color:var(--text)}.tab.active{color:var(--red);border-bottom-color:var(--red)}
+.workspace{flex:1;display:flex;flex-direction:column;z-index:1;position:relative}
+.diagram-info{padding:20px 32px 0;display:flex;gap:24px;align-items:baseline}
+.diagram-info h2{font-size:14px;font-weight:700;color:var(--text)}
+.diagram-info p{font-size:10px;color:var(--dim);letter-spacing:.04em}
+.controls{padding:12px 32px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border)}
+.btn{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 16px;border:1px solid;cursor:pointer;background:transparent;transition:all .15s}
+.btn-p{border-color:var(--red);color:var(--red)}.btn-p:hover{background:var(--red);color:var(--bg)}
+.btn-s{border-color:var(--dim);color:var(--dim)}.btn-s:hover{border-color:var(--text);color:var(--text)}
+.btn-r{border-color:var(--red);color:var(--red)}.btn-r:hover{background:var(--red);color:var(--bg)}
+.canvas{flex:1;padding:32px;min-height:320px;position:relative;overflow:hidden}
+.log{height:90px;overflow-y:auto;border-top:1px solid var(--border);padding:10px 32px;font-size:9px;line-height:1.9;color:var(--dim)}
+.log::-webkit-scrollbar{width:3px}.log::-webkit-scrollbar-thumb{background:var(--dim)}
+.le{display:flex;gap:10px}.le .t{color:var(--dim);min-width:65px}.le.ok .m{color:var(--accent)}.le.warn .m{color:var(--yellow)}.le.err .m{color:var(--red)}.le.info .m{color:var(--red)}
+.node{position:absolute;padding:8px 12px;border:1px solid;font-size:10px;text-align:center;transition:all .25s;white-space:nowrap}
+.node-green{background:rgba(0,212,170,.07);border-color:rgba(0,212,170,.3);color:var(--accent)}
+.node-purple{background:rgba(124,106,247,.07);border-color:rgba(124,106,247,.3);color:var(--purple)}
+.node-orange{background:rgba(255,107,53,.07);border-color:rgba(255,107,53,.3);color:var(--orange)}
+.node-blue{background:rgba(79,195,247,.07);border-color:rgba(79,195,247,.3);color:var(--blue)}
+.node-yellow{background:rgba(255,209,102,.07);border-color:rgba(255,209,102,.3);color:var(--yellow)}
+.node-red{background:rgba(255,68,102,.07);border-color:rgba(255,68,102,.3);color:var(--red)}
+.node.active{filter:brightness(1.6);box-shadow:0 0 12px currentColor}
+.node .sub{font-size:8px;color:var(--dim);margin-top:2px}
+.msg-badge{position:absolute;padding:3px 8px;border:1px solid;font-size:9px;font-weight:600;letter-spacing:.06em;border-radius:2px;transition:all .3s;pointer-events:none}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<header>
+  <a href="index.html" class="back">&larr; hub</a>
+  <h1>Auth &amp; Identity</h1>
+  <span>// 4 animated flow diagrams</span>
+</header>
+<div class="tabs" id="tabs"></div>
+<div class="workspace">
+  <div class="diagram-info"><h2 id="dTitle"></h2><p id="dDesc"></p></div>
+  <div class="controls">
+    <button class="btn btn-p" id="btnPlay">&#9654; Start</button>
+    <button class="btn btn-s" id="btnPause">&#9208; Pause</button>
+    <button class="btn btn-r" id="btnReset">&#8634; Reset</button>
+  </div>
+  <div class="canvas" id="canvas"></div>
+  <div class="log" id="log"></div>
+</div>
+<script>
+let current=null,iid=null,running=false;
+const logEl=document.getElementById('log'),canvas=document.getElementById('canvas');
+function ts(){const n=new Date();return`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`}
+function log(type,msg){const d=document.createElement('div');d.className=`le ${type}`;d.innerHTML=`<span class="t">${ts()}</span><span class="m">${msg}</span>`;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;while(logEl.children.length>40)logEl.removeChild(logEl.firstChild)}
+function clearLog(){logEl.innerHTML=''}
+function mkNode(x,y,w,label,sub,cls){const d=document.createElement('div');d.className=`node ${cls}`;d.style.cssText=`left:${x}px;top:${y}px;width:${w}px`;d.innerHTML=label+(sub?`<div class="sub">${sub}</div>`:'');canvas.appendChild(d);return d}
+function badge(x,y,text,color){const d=document.createElement('div');d.className='msg-badge';d.style.cssText=`left:${x}px;top:${y}px;background:${color}22;border-color:${color};color:${color}`;d.textContent=text;canvas.appendChild(d);return d}
+function flyBadge(bel,ex,ey,dur,cb){const sx=parseInt(bel.style.left),sy=parseInt(bel.style.top);const start=performance.now();function step(now){const t=Math.min((now-start)/dur,1);const ease=t<.5?2*t*t:1-Math.pow(-2*t+2,2)/2;bel.style.left=(sx+(ex-sx)*ease)+'px';bel.style.top=(sy+(ey-sy)*ease)+'px';if(t<1)requestAnimationFrame(step);else{bel.remove();if(cb)cb();}}requestAnimationFrame(step);}
+
+const diagrams=[
+// 0: JWT Token Lifecycle
+{title:'JWT Token Lifecycle',desc:'Issue, verify, expire, and refresh JSON Web Tokens',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const client=mkNode(30,120,100,'Client','browser/app','node-purple');
+  const authServer=mkNode(cx/3-50,50,130,'Auth Server','POST /login','node-red');
+  const apiServer=mkNode(cx*2/3-50,50,130,'API Server','verify JWT','node-blue');
+  const refresh=mkNode(cx/3-50,210,130,'Refresh Endpoint','POST /refresh','node-yellow');
+  const resource=mkNode(cx-160,120,130,'Protected Resource','user data','node-green');
+  const steps=[
+    ()=>{client.classList.add('active');setTimeout(()=>client.classList.remove('active'),400);
+      const b=badge(130,130,'credentials','#7c6af7');flyBadge(b,cx/3-50,70,600,null);
+      log('info','[Client] POST /login {email, password}')},
+    ()=>{authServer.classList.add('active');setTimeout(()=>authServer.classList.remove('active'),400);
+      log('ok','[Auth] credentials valid → generating JWT')},
+    ()=>{const b=badge(cx/3+80,70,'JWT','#00d4aa');flyBadge(b,130,130,600,null);
+      log('ok','[Auth→Client] access_token=eyJhbG... exp:3600s, refresh_token=rf_...')},
+    ()=>{client.classList.add('active');setTimeout(()=>client.classList.remove('active'),400);
+      const b=badge(130,130,'Bearer JWT','#4fc3f7');flyBadge(b,cx*2/3-50,70,600,null);
+      log('info','[Client] GET /api/data Authorization: Bearer eyJhbG...')},
+    ()=>{apiServer.classList.add('active');setTimeout(()=>apiServer.classList.remove('active'),400);
+      log('info','[API] verifying signature, checking exp claim')},
+    ()=>{resource.classList.add('active');setTimeout(()=>resource.classList.remove('active'),400);
+      const b=badge(cx*2/3+80,70,'200 OK','#00d4aa');flyBadge(b,cx-160,130,500,null);
+      log('ok','[API→Client] 200 OK { user data } ✓ token valid')},
+    ()=>{log('warn','[Client] token expired (exp claim passed)')},
+    ()=>{client.classList.add('active');setTimeout(()=>client.classList.remove('active'),400);
+      const b=badge(130,140,'refresh_token','#ffd166');flyBadge(b,cx/3-50,220,600,null);
+      log('info','[Client] POST /refresh {refresh_token: rf_...}')},
+    ()=>{refresh.classList.add('active');setTimeout(()=>refresh.classList.remove('active'),400);
+      log('ok','[Auth] refresh token valid → issuing new JWT')},
+    ()=>{const b=badge(cx/3+80,220,'new JWT','#00d4aa');flyBadge(b,130,140,600,null);
+      log('ok','[Auth→Client] new access_token issued, cycle continues')},
+  ];
+  let si=0;
+  this._tick=()=>{steps[si%steps.length]();si++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1200)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 1: SAML SSO Flow
+{title:'SAML SSO Flow',desc:'Service Provider ↔ Identity Provider SAML assertion exchange',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const user=mkNode(cx/2-50,20,100,'User','browser','node-purple');
+  const sp=mkNode(60,150,140,'Service Provider','app.example.com','node-blue');
+  const idp=mkNode(cx-200,150,140,'Identity Provider','idp.corp.com','node-orange');
+  const session=mkNode(cx/2-70,270,140,'Authenticated Session','SAML assertion','node-green');
+  const steps=[
+    ()=>{user.classList.add('active');setTimeout(()=>user.classList.remove('active'),400);
+      log('info','[User] navigates to app.example.com/dashboard')},
+    ()=>{sp.classList.add('active');setTimeout(()=>sp.classList.remove('active'),400);
+      log('info','[SP] user not authenticated → generate SAML AuthnRequest')},
+    ()=>{const b=badge(200,160,'AuthnRequest','#4fc3f7');flyBadge(b,cx-200,160,700,null);
+      log('info','[SP→IdP] 302 redirect with SAMLRequest (base64 encoded)')},
+    ()=>{idp.classList.add('active');setTimeout(()=>idp.classList.remove('active'),400);
+      log('warn','[IdP] prompting user for credentials (login page)')},
+    ()=>{log('info','[IdP] user authenticated via LDAP/AD backend')},
+    ()=>{idp.classList.add('active');setTimeout(()=>idp.classList.remove('active'),400);
+      log('info','[IdP] generating SAML Response with signed assertion')},
+    ()=>{const b=badge(cx-200,170,'SAMLResponse','#ff6b35');flyBadge(b,200,170,700,null);
+      log('info','[IdP→SP] POST /acs with SAMLResponse (signed XML)')},
+    ()=>{sp.classList.add('active');setTimeout(()=>sp.classList.remove('active'),400);
+      log('ok','[SP] validating XML signature against IdP certificate')},
+    ()=>{sp.classList.add('active');setTimeout(()=>sp.classList.remove('active'),400);
+      log('ok','[SP] assertion valid: NameID=user@corp.com, roles=[admin]')},
+    ()=>{session.classList.add('active');setTimeout(()=>session.classList.remove('active'),400);
+      log('ok','[SP] session created ✓ user redirected to /dashboard')},
+  ];
+  let si=0;
+  this._tick=()=>{steps[si%steps.length]();si++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1300)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 2: RBAC Access Control
+{title:'RBAC Access Control',desc:'Role-based policy evaluation — users, roles, permissions, resources',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const users=[
+    mkNode(30,40,100,'Alice','role: Admin','node-purple'),
+    mkNode(30,120,100,'Bob','role: Editor','node-blue'),
+    mkNode(30,200,100,'Carol','role: Viewer','node-yellow'),
+  ];
+  const engine=mkNode(cx/2-70,120,140,'Policy Engine','evaluate RBAC','node-red');
+  const resources=[
+    mkNode(cx-160,40,130,'DELETE /users','admin only','node-red'),
+    mkNode(cx-160,120,130,'PUT /articles','editor+','node-orange'),
+    mkNode(cx-160,200,130,'GET /articles','all roles','node-green'),
+  ];
+  // Role → permission matrix
+  const matrix={
+    Admin:['DELETE /users','PUT /articles','GET /articles'],
+    Editor:['PUT /articles','GET /articles'],
+    Viewer:['GET /articles'],
+  };
+  const userNames=['Alice','Bob','Carol'];
+  const roles=['Admin','Editor','Viewer'];
+  const resourceNames=['DELETE /users','PUT /articles','GET /articles'];
+  this._tick=()=>{
+    const ui=Math.floor(Math.random()*3);
+    const ri=Math.floor(Math.random()*3);
+    const role=roles[ui];
+    const resource=resourceNames[ri];
+    const allowed=matrix[role].includes(resource);
+    users[ui].classList.add('active');engine.classList.add('active');resources[ri].classList.add('active');
+    setTimeout(()=>{users[ui].classList.remove('active');engine.classList.remove('active');resources[ri].classList.remove('active')},500);
+    if(allowed){
+      log('ok',`[RBAC] ${userNames[ui]} (${role}) → ${resource} → ALLOW ✓`);
+    } else {
+      log('err',`[RBAC] ${userNames[ui]} (${role}) → ${resource} → DENY ✗ insufficient permissions`);
+    }
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 3: Certificate Chain Validation
+{title:'Certificate Chain Validation',desc:'Root CA → Intermediate CA → Leaf cert trust chain verification',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const rootCA=mkNode(cx/2-65,20,130,'Root CA','self-signed, trusted','node-green');
+  const intermediateCA=mkNode(cx/2-65,110,130,'Intermediate CA','signed by Root CA','node-blue');
+  const leafCert=mkNode(cx/2-65,200,130,'Leaf Certificate','*.example.com','node-yellow');
+  const server=mkNode(cx/2-65,290,130,'Server','TLS endpoint','node-purple');
+  const client=mkNode(30,200,100,'Client','verifier','node-orange');
+  // trust store indicator
+  const trustStore=document.createElement('div');
+  trustStore.style.cssText=`position:absolute;right:30px;top:20px;padding:8px 14px;border:1px dashed rgba(0,212,170,.3);font-size:9px;color:var(--accent);letter-spacing:.06em`;
+  trustStore.textContent='Trust Store';canvas.appendChild(trustStore);
+  const steps=[
+    ()=>{server.classList.add('active');setTimeout(()=>server.classList.remove('active'),400);
+      log('info','[TLS] server sends certificate chain to client')},
+    ()=>{leafCert.classList.add('active');setTimeout(()=>leafCert.classList.remove('active'),400);
+      const h=Math.random().toString(16).slice(2,10);
+      log('info',`[Verify] leaf cert: CN=*.example.com issuer=Intermediate CA serial:${h}`)},
+    ()=>{client.classList.add('active');setTimeout(()=>client.classList.remove('active'),400);
+      log('info','[Verify] checking leaf cert signature against Intermediate CA public key')},
+    ()=>{leafCert.classList.add('active');setTimeout(()=>leafCert.classList.remove('active'),400);
+      log('ok','[Verify] leaf cert signature VALID ✓')},
+    ()=>{intermediateCA.classList.add('active');setTimeout(()=>intermediateCA.classList.remove('active'),400);
+      log('info','[Verify] checking Intermediate CA cert signed by Root CA')},
+    ()=>{intermediateCA.classList.add('active');setTimeout(()=>intermediateCA.classList.remove('active'),400);
+      log('ok','[Verify] intermediate cert signature VALID ✓')},
+    ()=>{rootCA.classList.add('active');setTimeout(()=>rootCA.classList.remove('active'),400);
+      log('info','[Verify] Root CA found in local trust store')},
+    ()=>{rootCA.classList.add('active');setTimeout(()=>rootCA.classList.remove('active'),400);
+      log('ok','[Verify] Root CA is self-signed and TRUSTED ✓')},
+    ()=>{log('info','[Verify] checking certificate dates, revocation (OCSP/CRL)')},
+    ()=>{client.classList.add('active');setTimeout(()=>client.classList.remove('active'),500);
+      log('ok','[TLS] full chain verified ✓ — secure connection established')},
+  ];
+  let si=0;
+  this._tick=()=>{steps[si%steps.length]();si++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1100)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+];
+
+const tabsEl=document.getElementById('tabs');
+diagrams.forEach((d,i)=>{const t=document.createElement('div');t.className='tab';t.textContent=d.title;t.onclick=()=>show(i);tabsEl.appendChild(t)});
+function show(i){if(current!==null)diagrams[current].pause&&diagrams[current].pause();running=false;clearInterval(iid);current=i;document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.getElementById('dTitle').textContent=diagrams[i].title;document.getElementById('dDesc').textContent=diagrams[i].desc;diagrams[i].init()}
+document.getElementById('btnPlay').onclick=()=>{if(current!==null&&!running){diagrams[current].start();running=true;}};
+document.getElementById('btnPause').onclick=()=>{if(current!==null){diagrams[current].pause();running=false;}};
+document.getElementById('btnReset').onclick=()=>{if(current!==null){diagrams[current].reset();running=false;}};
+show(0);
+</script>
+</body>
+</html>

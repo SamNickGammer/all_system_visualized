@@ -50,7 +50,7 @@ header span{font-size:10px;color:var(--dim)}
 <header>
   <a href="index.html" class="back">← hub</a>
   <h1>Distributed Systems</h1>
-  <span>// 7 animated flow diagrams</span>
+  <span>// 10 animated flow diagrams</span>
 </header>
 <div class="tabs" id="tabs"></div>
 <div class="workspace">
@@ -320,6 +320,132 @@ init(){
   };
 },
 start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),700)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 7: Event Sourcing / CQRS
+{title:'Event Sourcing / CQRS',desc:'Commands produce events → append to event store → project to read models',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const cmd=mkNode(30,60,110,'Command','CreateOrder','node-purple');
+  const handler=mkNode(180,60,120,'Command Handler','validate+exec','node-blue');
+  const store=mkNode(cx/2-60,60,130,'Event Store','append-only log','node-orange');
+  const bus=mkNode(cx/2-60,170,130,'Event Bus','publish events','node-yellow');
+  const readModel=mkNode(cx-170,110,140,'Read Model','materialized view','node-green');
+  const queryApi=mkNode(cx-170,220,140,'Query API','GET /orders','node-green');
+  let offset=0;
+  const events=['OrderCreated','PaymentReceived','ItemShipped','OrderCancelled','RefundIssued'];
+  const steps=[
+    ()=>{cmd.classList.add('active');handler.classList.add('active');setTimeout(()=>{cmd.classList.remove('active');handler.classList.remove('active')},400);log('info','[Command] CreateOrder cmd received, validating...')},
+    ()=>{store.classList.add('active');setTimeout(()=>store.classList.remove('active'),400);offset++;const evt=events[Math.floor(Math.random()*events.length)];log('info',`[EventStore] ${evt} appended offset:${offset}`)},
+    ()=>{bus.classList.add('active');setTimeout(()=>bus.classList.remove('active'),400);log('info','[EventBus] publishing event to subscribers')},
+    ()=>{readModel.classList.add('active');setTimeout(()=>readModel.classList.remove('active'),400);log('ok','[ReadModel] projection updated — order count++')},
+    ()=>{queryApi.classList.add('active');setTimeout(()=>queryApi.classList.remove('active'),400);log('ok','[Query] GET /orders → 200 OK (eventually consistent)')},
+  ];
+  let si=0;
+  this._tick=()=>{steps[si%steps.length]();si++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 8: Circuit Breaker
+{title:'Circuit Breaker Pattern',desc:'CLOSED → OPEN → HALF-OPEN state machine protecting against cascading failures',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const client=mkNode(30,130,100,'Client','requests','node-purple');
+  const breaker=mkNode(cx/2-70,130,140,'Circuit Breaker','state: CLOSED','node-green');
+  const service=mkNode(cx-160,130,120,'Downstream Svc','external API','node-blue');
+  // State indicators
+  const closed=mkNode(cx/4-40,260,80,'CLOSED','normal','node-green');
+  const open=mkNode(cx/2-40,260,80,'OPEN','blocking','node-red');
+  const half=mkNode(cx*3/4-40,260,80,'HALF-OPEN','probing','node-yellow');
+  let failures=0,successes=0,state='CLOSED',reqCount=0;
+  const threshold=4;
+  this._tick=()=>{
+    reqCount++;
+    client.classList.add('active');setTimeout(()=>client.classList.remove('active'),300);
+    closed.classList.remove('active');open.classList.remove('active');half.classList.remove('active');
+    if(state==='CLOSED'){
+      closed.classList.add('active');
+      const fail=Math.random()>.6;
+      if(fail){failures++;service.classList.add('active');setTimeout(()=>service.classList.remove('active'),300);
+        log('err',`[CB] request #${reqCount} FAILED (${failures}/${threshold} failures)`);
+        if(failures>=threshold){state='OPEN';breaker.querySelector('.sub').textContent='state: OPEN';breaker.className='node node-red';
+          log('err','[CB] threshold reached → state: OPEN (blocking requests)')}}
+      else{successes++;service.classList.add('active');setTimeout(()=>service.classList.remove('active'),300);
+        log('ok',`[CB] request #${reqCount} succeeded (failures:${failures})`)}
+    } else if(state==='OPEN'){
+      open.classList.add('active');
+      log('warn',`[CB] request #${reqCount} BLOCKED — circuit is OPEN`);
+      if(Math.random()>.6){state='HALF-OPEN';breaker.querySelector('.sub').textContent='state: HALF-OPEN';breaker.className='node node-yellow';
+        log('warn','[CB] timeout elapsed → state: HALF-OPEN (allowing probe)')}
+    } else {
+      half.classList.add('active');
+      const probeOk=Math.random()>.4;
+      if(probeOk){state='CLOSED';failures=0;breaker.querySelector('.sub').textContent='state: CLOSED';breaker.className='node node-green';
+        service.classList.add('active');setTimeout(()=>service.classList.remove('active'),300);
+        log('ok','[CB] probe succeeded → state: CLOSED ✓')}
+      else{state='OPEN';breaker.querySelector('.sub').textContent='state: OPEN';breaker.className='node node-red';
+        log('err','[CB] probe failed → state: OPEN again')}
+    }
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 9: Saga Pattern (Orchestration)
+{title:'Saga Pattern',desc:'Orchestrator coordinates distributed transactions with compensation on failure',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const orch=mkNode(cx/2-60,140,120,'Orchestrator','saga coordinator','node-yellow');
+  const svcs=[
+    mkNode(cx/2-60,20,120,'Order Service','step 1','node-blue'),
+    mkNode(cx-160,80,120,'Payment Service','step 2','node-green'),
+    mkNode(cx-160,200,120,'Inventory Service','step 3','node-purple'),
+    mkNode(cx/2-60,270,120,'Shipping Service','step 4','node-orange'),
+  ];
+  const svcNames=['Order','Payment','Inventory','Shipping'];
+  let sagaId=0,step=0,compensating=false,compStep=0;
+  this._tick=()=>{
+    svcs.forEach(s=>s.classList.remove('active'));orch.classList.remove('active');
+    if(!compensating){
+      if(step===0){sagaId++;orch.classList.add('active');log('info',`[Saga #${sagaId}] starting new saga`);}
+      else if(step<=4){
+        const si=step-1;
+        orch.classList.add('active');svcs[si].classList.add('active');
+        const fail=step===3&&Math.random()>.65;
+        if(fail){
+          log('err',`[${svcNames[si]}] FAILED — insufficient stock`);
+          compensating=true;compStep=si-1;
+          log('warn',`[Saga #${sagaId}] initiating compensation rollback`);
+        } else {
+          log('ok',`[${svcNames[si]}] step ${step}/4 completed ✓`);
+        }
+      } else {
+        orch.classList.add('active');
+        log('ok',`[Saga #${sagaId}] all steps completed ✓ transaction committed`);
+        step=-1;
+      }
+      step++;
+    } else {
+      if(compStep>=0){
+        orch.classList.add('active');svcs[compStep].classList.add('active');
+        log('warn',`[${svcNames[compStep]}] compensating → undo step ${compStep+1}`);
+        compStep--;
+      } else {
+        orch.classList.add('active');
+        log('err',`[Saga #${sagaId}] fully rolled back — saga aborted`);
+        compensating=false;step=0;
+      }
+    }
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
 pause(){clearInterval(iid);running=false},
 reset(){clearInterval(iid);running=false;this.init()}},
 ];

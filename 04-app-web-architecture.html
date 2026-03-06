@@ -46,7 +46,7 @@ header span{font-size:10px;color:var(--dim)}
 <header>
   <a href="index.html" class="back">← hub</a>
   <h1>App &amp; Web Architecture</h1>
-  <span>// 5 animated flow diagrams</span>
+  <span>// 8 animated flow diagrams</span>
 </header>
 <div class="tabs" id="tabs"></div>
 <div class="workspace">
@@ -216,6 +216,96 @@ init(){
   };
 },
 start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 5: SSR vs CSR vs SSG
+{title:'SSR vs CSR vs SSG',desc:'Server-Side, Client-Side, and Static Site Generation rendering compared',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;const third=Math.floor(cx/3)-10;
+  // Column labels
+  ['SSR (Next.js)','CSR (React SPA)','SSG (Astro)'].forEach((label,i)=>{
+    const l=document.createElement('div');l.style.cssText=`position:absolute;left:${10+i*(third+10)}px;top:5px;font-size:9px;letter-spacing:.1em;text-transform:uppercase;color:${['var(--blue)','var(--orange)','var(--accent)'][i]}`;l.textContent=label;canvas.appendChild(l);
+  });
+  // SSR nodes
+  const ssr=[mkNode(10,40,third,'Request','GET /page','nb'),mkNode(10,100,third,'Server Render','HTML generated','nb'),mkNode(10,160,third,'Send HTML','full content','nb'),mkNode(10,220,third,'Hydrate','interactive','ng')];
+  // CSR nodes
+  const csr=[mkNode(10+third+10,40,third,'Request','GET /','no'),mkNode(10+third+10,100,third,'Empty HTML','shell only','no'),mkNode(10+third+10,160,third,'Download JS','bundle.js','no'),mkNode(10+third+10,220,third,'Client Render','React mounts','no')];
+  // SSG nodes
+  const ssg=[mkNode(10+(third+10)*2,40,third,'Build Time','generate HTML','ng'),mkNode(10+(third+10)*2,100,third,'CDN Cache','edge served','ng'),mkNode(10+(third+10)*2,160,third,'Request','instant HTML','ng'),mkNode(10+(third+10)*2,220,third,'Hydrate','optional JS','ng')];
+  const all=[ssr,csr,ssg];const names=['SSR','CSR','SSG'];
+  const metrics=[['TTFB:200ms','FCP:300ms'],['TTFB:50ms','FCP:1200ms'],['TTFB:20ms','FCP:50ms']];
+  let col=0,step=0;
+  this._tick=()=>{
+    all.flat().forEach(n=>n.classList.remove('active'));
+    all[col][step].classList.add('active');
+    log(col===2?'ok':'info',`[${names[col]}] step ${step+1}/4 — ${metrics[col][step>1?1:0]}`);
+    step++;
+    if(step>=4){step=0;col=(col+1)%3;}
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),800)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 6: Service Worker / PWA Caching
+{title:'Service Worker Caching',desc:'SW intercepts requests — serve from cache or fetch from network',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const browser=mkNode(30,120,100,'Browser','fetch()','np');
+  const sw=mkNode(cx/3-30,120,130,'Service Worker','interceptor','ny');
+  const cache=mkNode(cx*2/3-30,60,120,'Cache Storage','local cache','ng');
+  const network=mkNode(cx*2/3-30,190,120,'Network','origin server','nb');
+  const response=mkNode(cx-120,120,100,'Response','200 OK','ng');
+  let hits=0,misses=0;
+  const urls=['/api/data','/images/logo.png','/styles.css','/api/users','/manifest.json','/offline.html'];
+  this._tick=()=>{
+    const url=urls[Math.floor(Math.random()*urls.length)];
+    browser.classList.add('active');sw.classList.add('active');
+    setTimeout(()=>{browser.classList.remove('active');sw.classList.remove('active')},300);
+    const hit=Math.random()>.4;
+    if(hit){
+      hits++;cache.classList.add('active');response.classList.add('active');
+      setTimeout(()=>{cache.classList.remove('active');response.classList.remove('active')},300);
+      log('ok',`[SW] ${url} → cache HIT (${hits} hits, ${misses} misses)`);
+    } else {
+      misses++;network.classList.add('active');
+      setTimeout(()=>{network.classList.remove('active');cache.classList.add('active');setTimeout(()=>cache.classList.remove('active'),200)},200);
+      log('warn',`[SW] ${url} → cache MISS → fetch network → stored in cache`);
+    }
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 7: JavaScript Event Loop
+{title:'Event Loop',desc:'Call stack, Web APIs, microtask queue, macrotask queue — JS execution model',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const stack=mkNode(20,40,120,'Call Stack','executing','nk');
+  const webapi=mkNode(cx/3,40,130,'Web APIs','setTimeout/fetch','nb');
+  const micro=mkNode(cx*2/3,40,130,'Microtask Queue','Promise.then','np');
+  const macro=mkNode(cx*2/3,150,130,'Macrotask Queue','setTimeout cb','ny');
+  const loop=mkNode(cx/3,150,130,'Event Loop','scheduler','ng');
+  // Loop arrow indicator
+  const arrow=document.createElement('div');arrow.style.cssText=`position:absolute;left:${cx/3+65}px;top:110px;font-size:16px;color:var(--accent)`;arrow.textContent='↻';canvas.appendChild(arrow);
+  const events=[
+    ()=>{stack.classList.add('active');setTimeout(()=>stack.classList.remove('active'),300);log('info','[Stack] executing main() — synchronous code')},
+    ()=>{stack.classList.add('active');webapi.classList.add('active');setTimeout(()=>{stack.classList.remove('active');webapi.classList.remove('active')},300);log('info','[Stack→WebAPI] setTimeout(cb, 0) registered')},
+    ()=>{stack.classList.add('active');micro.classList.add('active');setTimeout(()=>{stack.classList.remove('active');micro.classList.remove('active')},300);log('info','[Stack] Promise.resolve().then(cb) → microtask queued')},
+    ()=>{stack.classList.add('active');setTimeout(()=>stack.classList.remove('active'),300);log('info','[Stack] console.log("sync") — stack now empty')},
+    ()=>{loop.classList.add('active');micro.classList.add('active');setTimeout(()=>{loop.classList.remove('active');micro.classList.remove('active')},300);log('ok','[EventLoop] microtask queue → stack (Promise.then runs)')},
+    ()=>{loop.classList.add('active');macro.classList.add('active');setTimeout(()=>{loop.classList.remove('active');macro.classList.remove('active')},300);log('ok','[EventLoop] macrotask queue → stack (setTimeout cb runs)')},
+    ()=>{loop.classList.add('active');setTimeout(()=>loop.classList.remove('active'),300);log('info','[EventLoop] checking queues... both empty, waiting for events')},
+  ];
+  let si=0;
+  this._tick=()=>{events[si%events.length]();si++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1100)},
 pause(){clearInterval(iid);running=false},
 reset(){clearInterval(iid);running=false;this.init()}},
 ];

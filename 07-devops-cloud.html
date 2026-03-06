@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>DevOps & Cloud — Flow Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c10;--panel:#0f1318;--border:#1e2530;--accent:#00d4aa;--purple:#7c6af7;--orange:#ff6b35;--yellow:#ffd166;--red:#ff4466;--blue:#4fc3f7;--text:#c8d8e8;--dim:#4a5568}
+body{background:var(--bg);font-family:'JetBrains Mono',monospace;color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(255,107,53,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,107,53,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+header{padding:20px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;z-index:1;position:relative}
+.back{font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.1em;transition:color .15s}.back:hover{color:var(--orange)}
+header h1{font-size:13px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--orange)}
+header span{font-size:10px;color:var(--dim)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;z-index:1;position:relative;flex-shrink:0}
+.tab{font-size:10px;letter-spacing:.08em;padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;color:var(--dim);transition:all .15s;text-transform:uppercase}
+.tab:hover{color:var(--text)}.tab.active{color:var(--orange);border-bottom-color:var(--orange)}
+.workspace{flex:1;display:flex;flex-direction:column;z-index:1;position:relative}
+.diagram-info{padding:20px 32px 0;display:flex;gap:24px;align-items:baseline}
+.diagram-info h2{font-size:14px;font-weight:700;color:var(--text)}
+.diagram-info p{font-size:10px;color:var(--dim);letter-spacing:.04em}
+.controls{padding:12px 32px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border)}
+.btn{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 16px;border:1px solid;cursor:pointer;background:transparent;transition:all .15s}
+.btn-p{border-color:var(--orange);color:var(--orange)}.btn-p:hover{background:var(--orange);color:var(--bg)}
+.btn-s{border-color:var(--dim);color:var(--dim)}.btn-s:hover{border-color:var(--text);color:var(--text)}
+.btn-r{border-color:var(--red);color:var(--red)}.btn-r:hover{background:var(--red);color:var(--bg)}
+.canvas{flex:1;padding:32px;min-height:320px;position:relative;overflow:hidden}
+.log{height:90px;overflow-y:auto;border-top:1px solid var(--border);padding:10px 32px;font-size:9px;line-height:1.9;color:var(--dim)}
+.log::-webkit-scrollbar{width:3px}.log::-webkit-scrollbar-thumb{background:var(--dim)}
+.le{display:flex;gap:10px}.le .t{color:var(--dim);min-width:65px}.le.ok .m{color:var(--accent)}.le.warn .m{color:var(--yellow)}.le.err .m{color:var(--red)}.le.info .m{color:var(--orange)}
+.node{position:absolute;padding:8px 12px;border:1px solid;font-size:10px;text-align:center;transition:all .25s;white-space:nowrap}
+.node-green{background:rgba(0,212,170,.07);border-color:rgba(0,212,170,.3);color:var(--accent)}
+.node-purple{background:rgba(124,106,247,.07);border-color:rgba(124,106,247,.3);color:var(--purple)}
+.node-orange{background:rgba(255,107,53,.07);border-color:rgba(255,107,53,.3);color:var(--orange)}
+.node-blue{background:rgba(79,195,247,.07);border-color:rgba(79,195,247,.3);color:var(--blue)}
+.node-yellow{background:rgba(255,209,102,.07);border-color:rgba(255,209,102,.3);color:var(--yellow)}
+.node-red{background:rgba(255,68,102,.07);border-color:rgba(255,68,102,.3);color:var(--red)}
+.node.active{filter:brightness(1.6);box-shadow:0 0 12px currentColor}
+.node .sub{font-size:8px;color:var(--dim);margin-top:2px}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<header>
+  <a href="index.html" class="back">&larr; hub</a>
+  <h1>DevOps &amp; Cloud</h1>
+  <span>// 5 animated flow diagrams</span>
+</header>
+<div class="tabs" id="tabs"></div>
+<div class="workspace">
+  <div class="diagram-info"><h2 id="dTitle"></h2><p id="dDesc"></p></div>
+  <div class="controls">
+    <button class="btn btn-p" id="btnPlay">&#9654; Start</button>
+    <button class="btn btn-s" id="btnPause">&#9208; Pause</button>
+    <button class="btn btn-r" id="btnReset">&#8634; Reset</button>
+  </div>
+  <div class="canvas" id="canvas"></div>
+  <div class="log" id="log"></div>
+</div>
+<script>
+let current=null,iid=null,running=false;
+const logEl=document.getElementById('log'),canvas=document.getElementById('canvas');
+function ts(){const n=new Date();return`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`}
+function log(type,msg){const d=document.createElement('div');d.className=`le ${type}`;d.innerHTML=`<span class="t">${ts()}</span><span class="m">${msg}</span>`;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;while(logEl.children.length>40)logEl.removeChild(logEl.firstChild)}
+function clearLog(){logEl.innerHTML=''}
+function mkNode(x,y,w,label,sub,cls){const d=document.createElement('div');d.className=`node ${cls}`;d.style.cssText=`left:${x}px;top:${y}px;width:${w}px`;d.innerHTML=label+(sub?`<div class="sub">${sub}</div>`:'');canvas.appendChild(d);return d}
+
+const diagrams=[
+// 0: Terraform Plan → Apply
+{title:'Terraform Plan → Apply',desc:'Infrastructure as Code lifecycle — plan, diff, apply, state management',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const gap=Math.floor((cx-40)/5);
+  const stateFile=mkNode(20,100,gap-10,'State File','.tfstate','node-blue');
+  const plan=mkNode(20+gap,100,gap-10,'terraform plan','diff compute','node-yellow');
+  const diff=mkNode(20+gap*2,100,gap-10,'Diff Output','+3 ~1 -0','node-orange');
+  const apply=mkNode(20+gap*3,100,gap-10,'terraform apply','execute','node-purple');
+  const cloud=mkNode(20+gap*4,100,gap-10,'Cloud Resources','AWS/GCP','node-green');
+  const resources=['aws_ec2_instance.web','aws_s3_bucket.data','aws_rds.db','aws_lambda.func','aws_vpc.main'];
+  const stages=[stateFile,plan,diff,apply,cloud];
+  let si=0,applied=0;
+  this._tick=()=>{
+    stages.forEach(s=>s.classList.remove('active'));
+    stages[si].classList.add('active');
+    if(si===0)log('info','[Terraform] reading state file, refreshing resources');
+    else if(si===1){const r=resources[Math.floor(Math.random()*resources.length)];log('info',`[Plan] + ${r} will be created`)}
+    else if(si===2){const add=Math.floor(Math.random()*3+1),chg=Math.floor(Math.random()*2);log('warn',`[Diff] Plan: ${add} to add, ${chg} to change, 0 to destroy`)}
+    else if(si===3){applied++;log('info',`[Apply] applying changes... (${applied} resources modified)`)}
+    else{log('ok',`[Apply] ✓ apply complete — ${applied} resources in state`)}
+    si=(si+1)%stages.length;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 1: Docker Container Lifecycle
+{title:'Docker Container Lifecycle',desc:'Build image layers, run containers, stop, restart — full lifecycle',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const stages=[
+    {l:'Dockerfile',s:'FROM node:18',c:'node-blue'},
+    {l:'docker build',s:'layer caching',c:'node-yellow'},
+    {l:'Image',s:'sha256:a3f2...',c:'node-purple'},
+    {l:'docker run',s:'-p 3000:3000',c:'node-orange'},
+    {l:'Running',s:'container up',c:'node-green'},
+    {l:'docker stop',s:'SIGTERM',c:'node-red'},
+  ];
+  const gap=Math.floor((cx-40)/stages.length);
+  const els=stages.map((s,i)=>mkNode(20+i*gap,100,gap-15,s.l,s.s,s.c));
+  let si=0,containers=0;
+  const layers=['COPY package*.json','RUN npm install','COPY . .','RUN npm build','EXPOSE 3000'];
+  this._tick=()=>{
+    els.forEach(e=>e.classList.remove('active'));
+    els[si].classList.add('active');
+    if(si===0)log('info','[Docker] parsing Dockerfile — 5 instructions');
+    else if(si===1){const l=layers[Math.floor(Math.random()*layers.length)];const cached=Math.random()>.5;log(cached?'ok':'info',`[Build] ${l} ${cached?'→ CACHED':'→ running'}`)}
+    else if(si===2)log('info',`[Image] built sha:${Math.random().toString(16).slice(2,10)} size:142MB`);
+    else if(si===3){containers++;log('info',`[Run] container #${containers} starting on port 3000`)}
+    else if(si===4)log('ok',`[Container] healthy ✓ PID:${Math.floor(Math.random()*9000+1000)} uptime:${Math.floor(Math.random()*300)}s`);
+    else log('warn','[Stop] SIGTERM sent → graceful shutdown 10s');
+    si=(si+1)%stages.length;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 2: Service Mesh (Istio/Envoy)
+{title:'Service Mesh (Istio)',desc:'Sidecar proxy pattern with mTLS, traffic routing, and observability',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const istiod=mkNode(cx/2-60,10,120,'Istiod','control plane','node-purple');
+  const svcA=mkNode(40,130,110,'Service A','order-svc','node-blue');
+  const envoyA=mkNode(40,210,110,'Envoy Proxy','sidecar A','node-yellow');
+  const envoyB=mkNode(cx-160,210,110,'Envoy Proxy','sidecar B','node-yellow');
+  const svcB=mkNode(cx-160,130,110,'Service B','payment-svc','node-green');
+  // mTLS tunnel indicator
+  const tunnel=document.createElement('div');
+  tunnel.style.cssText=`position:absolute;left:160px;top:205px;width:${cx-330}px;height:30px;border:1px dashed rgba(0,212,170,.3);background:rgba(0,212,170,.03)`;
+  canvas.appendChild(tunnel);
+  const tlabel=document.createElement('div');tlabel.style.cssText='position:absolute;left:165px;top:192px;font-size:8px;color:rgba(0,212,170,.5);letter-spacing:.08em';tlabel.textContent='// mTLS encrypted';canvas.appendChild(tlabel);
+  const steps=[
+    ()=>{istiod.classList.add('active');setTimeout(()=>istiod.classList.remove('active'),400);log('info','[Istiod] pushing config + certs to sidecars')},
+    ()=>{svcA.classList.add('active');setTimeout(()=>svcA.classList.remove('active'),400);log('info','[Service A] outbound request to payment-svc')},
+    ()=>{envoyA.classList.add('active');setTimeout(()=>envoyA.classList.remove('active'),400);log('info','[Envoy A] intercepted → mTLS encrypt → route to sidecar B')},
+    ()=>{envoyB.classList.add('active');setTimeout(()=>envoyB.classList.remove('active'),400);log('info','[Envoy B] mTLS decrypt → verify cert → forward to Service B')},
+    ()=>{svcB.classList.add('active');setTimeout(()=>svcB.classList.remove('active'),400);log('ok','[Service B] processed request → 200 OK')},
+    ()=>{envoyB.classList.add('active');setTimeout(()=>envoyB.classList.remove('active'),400);log('info','[Envoy B] response → mTLS encrypt → return')},
+    ()=>{envoyA.classList.add('active');setTimeout(()=>envoyA.classList.remove('active'),400);const lat=Math.floor(Math.random()*15+3);log('ok',`[Envoy A] response delivered to Service A lat:${lat}ms`)},
+    ()=>{istiod.classList.add('active');setTimeout(()=>istiod.classList.remove('active'),400);log('info','[Istiod] telemetry: request_count++ latency_p99=12ms')},
+  ];
+  let si=0;
+  this._tick=()=>{steps[si%steps.length]();si++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 3: Serverless Cold Start
+{title:'Serverless Cold Start',desc:'Lambda lifecycle — cold init, warm execution, scale to zero',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const stages=[
+    {l:'API Request',s:'GET /process',c:'node-blue'},
+    {l:'Lambda Runtime',s:'provision env',c:'node-purple'},
+    {l:'Init (Cold)',s:'load deps',c:'node-red'},
+    {l:'Execute',s:'handler()',c:'node-green'},
+    {l:'Response',s:'200 OK',c:'node-green'},
+    {l:'Scale to Zero',s:'idle timeout',c:'node-yellow'},
+  ];
+  const gap=Math.floor((cx-40)/stages.length);
+  const els=stages.map((s,i)=>mkNode(20+i*gap,100,gap-15,s.l,s.s,s.c));
+  let si=0,invocations=0,coldStarts=0;
+  const statEl=document.createElement('div');statEl.style.cssText='position:absolute;bottom:20px;left:20px;font-size:9px;line-height:2';canvas.appendChild(statEl);
+  const upd=()=>{statEl.innerHTML=`invocations: <span style="color:var(--accent)">${invocations}</span>  cold_starts: <span style="color:var(--red)">${coldStarts}</span>  warm: <span style="color:var(--accent)">${invocations-coldStarts}</span>`};
+  upd();
+  this._tick=()=>{
+    els.forEach(e=>e.classList.remove('active'));
+    els[si].classList.add('active');
+    if(si===0){invocations++;log('info',`[API] incoming request #${invocations}`)}
+    else if(si===1)log('info','[Lambda] provisioning execution environment');
+    else if(si===2){const cold=Math.random()>.6;if(cold){coldStarts++;log('err',`[Cold Start] initializing runtime +${Math.floor(Math.random()*800+200)}ms`)}else log('ok','[Warm] reusing existing container')}
+    else if(si===3){const dur=Math.floor(Math.random()*100+10);log('info',`[Execute] handler completed in ${dur}ms`)}
+    else if(si===4)log('ok','[Response] 200 OK returned to client');
+    else log('warn','[Idle] no requests for 5min → scaling to zero');
+    upd();si=(si+1)%stages.length;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 4: Blue/Green Deployment
+{title:'Blue/Green Deployment',desc:'Zero-downtime deployment by switching traffic between environments',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const lb=mkNode(cx/2-60,20,120,'Load Balancer','traffic router','node-yellow');
+  const blue=mkNode(80,150,150,'Blue (v1.0)','ACTIVE — 3 pods','node-blue');
+  const green=mkNode(cx-230,150,150,'Green (v1.1)','STANDBY — 3 pods','node-green');
+  const users=mkNode(cx/2-50,270,100,'Users','100% traffic','node-purple');
+  let phase=0;const phases=['active-blue','deploy-green','test-green','switch','active-green','cleanup'];
+  this._tick=()=>{
+    const p=phases[phase%phases.length];
+    blue.classList.remove('active');green.classList.remove('active');lb.classList.remove('active');
+    if(p==='active-blue'){blue.classList.add('active');log('info','[Blue] serving 100% traffic — v1.0 stable')}
+    else if(p==='deploy-green'){green.classList.add('active');log('info','[Green] deploying v1.1 to standby environment')}
+    else if(p==='test-green'){green.classList.add('active');log('warn','[Green] running smoke tests + health checks')}
+    else if(p==='switch'){lb.classList.add('active');green.classList.add('active');
+      green.querySelector('.sub').textContent='ACTIVE — 3 pods';
+      blue.querySelector('.sub').textContent='STANDBY — 3 pods';
+      log('ok','[LB] switching traffic: Blue→Green 100%')}
+    else if(p==='active-green'){green.classList.add('active');log('ok','[Green] serving 100% traffic — v1.1 live ✓')}
+    else{blue.classList.add('active');
+      blue.querySelector('.sub').textContent='ACTIVE — 3 pods';
+      green.querySelector('.sub').textContent='STANDBY — 3 pods';
+      log('info','[Cleanup] previous blue env ready for next deploy')}
+    phase++;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1200)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+];
+
+const tabsEl=document.getElementById('tabs');
+diagrams.forEach((d,i)=>{const t=document.createElement('div');t.className='tab';t.textContent=d.title;t.onclick=()=>show(i);tabsEl.appendChild(t)});
+function show(i){if(current!==null)diagrams[current].pause&&diagrams[current].pause();running=false;clearInterval(iid);current=i;document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.getElementById('dTitle').textContent=diagrams[i].title;document.getElementById('dDesc').textContent=diagrams[i].desc;diagrams[i].init()}
+document.getElementById('btnPlay').onclick=()=>{if(current!==null&&!running){diagrams[current].start();running=true;}};
+document.getElementById('btnPause').onclick=()=>{if(current!==null){diagrams[current].pause();running=false;}};
+document.getElementById('btnReset').onclick=()=>{if(current!==null){diagrams[current].reset();running=false;}};
+show(0);
+</script>
+</body>
+</html>

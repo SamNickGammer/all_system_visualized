@@ -47,7 +47,7 @@ header span{font-size:10px;color:var(--dim)}
 <header>
   <a href="index.html" class="back">← hub</a>
   <h1>Networking &amp; Security</h1>
-  <span>// 5 animated flow diagrams</span>
+  <span>// 8 animated flow diagrams</span>
 </header>
 <div class="tabs" id="tabs"></div>
 <div class="workspace">
@@ -220,6 +220,95 @@ init(){
   this._tick=()=>{steps[si%steps.length]();si++};
 },
 start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 5: TLS 1.3 Handshake
+{title:'TLS 1.3 Handshake',desc:'1-RTT handshake — ClientHello, ServerHello, encrypted extensions, finished',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const client=mkNode(30,100,110,'Client','browser','node-purple');
+  const server=mkNode(cx-150,100,130,'Server','TLS 1.3','node-blue');
+  const tl=document.createElement('div');tl.style.cssText=`position:absolute;left:140px;top:80px;width:2px;height:220px;background:rgba(124,106,247,.2)`;canvas.appendChild(tl);
+  const tr=document.createElement('div');tr.style.cssText=`position:absolute;right:155px;top:80px;width:2px;height:220px;background:rgba(79,195,247,.2)`;canvas.appendChild(tr);
+  const steps=[
+    {msg:'ClientHello',from:140,to:cx-155,y:90,color:'#7c6af7',log:'[Client] ClientHello + key_share(x25519) + supported_ciphers'},
+    {msg:'ServerHello',from:cx-155,to:140,y:130,color:'#4fc3f7',log:'[Server] ServerHello + key_share → handshake keys derived'},
+    {msg:'EncExt+Cert',from:cx-155,to:140,y:170,color:'#ffd166',log:'[Server] {EncryptedExtensions, Certificate, CertVerify, Finished}'},
+    {msg:'Finished',from:140,to:cx-155,y:210,color:'#00d4aa',log:'[Client] Finished — handshake complete, 0-RTT possible next time'},
+    {msg:'App Data',from:140,to:cx-155,y:250,color:'#ff6b35',log:'[Client] encrypted application data flowing ✓'},
+    {msg:'App Data',from:cx-155,to:140,y:280,color:'#ff6b35',log:'[Server] encrypted response ✓ — TLS 1.3 session active'},
+  ];
+  let si=0;
+  this._tick=()=>{
+    const s=steps[si%steps.length];
+    const b=badge(s.from,s.y,s.msg,s.color);
+    flyBadge(b,s.to,s.y,600,null);
+    log(si%steps.length>=3?'ok':'info',s.log);si++;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1200)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 6: BGP Route Propagation
+{title:'BGP Route Propagation',desc:'Autonomous Systems exchange route announcements via BGP peering',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const nodes=[
+    mkNode(cx/2-55,20,110,'AS 64512','ISP-A','node-green'),
+    mkNode(40,150,110,'AS 64513','ISP-B','node-blue'),
+    mkNode(cx-150,150,110,'AS 64514','ISP-C','node-purple'),
+    mkNode(cx/2-55,260,110,'AS 64515','Enterprise','node-orange'),
+  ];
+  const asNames=['AS64512','AS64513','AS64514','AS64515'];
+  const prefixes=['10.0.0.0/8','172.16.0.0/12','192.168.0.0/16','203.0.113.0/24'];
+  let step=0;
+  const announcements=[
+    [0,1,'10.0.0.0/8','[64512]'],
+    [1,3,'10.0.0.0/8','[64513,64512]'],
+    [0,2,'172.16.0.0/12','[64512]'],
+    [2,3,'172.16.0.0/12','[64514,64512]'],
+    [3,1,'203.0.113.0/24','[64515]'],
+    [1,0,'203.0.113.0/24','[64513,64515]'],
+  ];
+  this._tick=()=>{
+    const [from,to,prefix,path]=announcements[step%announcements.length];
+    nodes[from].classList.add('active');nodes[to].classList.add('active');
+    setTimeout(()=>{nodes[from].classList.remove('active');nodes[to].classList.remove('active')},500);
+    log('info',`[${asNames[from]}→${asNames[to]}] UPDATE prefix:${prefix} AS_PATH:${path}`);
+    if(step%3===2)log('ok',`[${asNames[to]}] route installed in RIB, best path selected`);
+    step++;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1100)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 7: mTLS Mutual Authentication
+{title:'mTLS Mutual Auth',desc:'Bidirectional certificate exchange — both client and server verify each other',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const client=mkNode(30,130,120,'Client','has client cert','node-purple');
+  const server=mkNode(cx-160,130,130,'Server','has server cert','node-blue');
+  const ca=mkNode(cx/2-50,20,100,'CA','trust anchor','node-green');
+  const steps=[
+    ()=>{client.classList.add('active');setTimeout(()=>client.classList.remove('active'),400);log('info','[Client] initiating mTLS handshake')},
+    ()=>{server.classList.add('active');setTimeout(()=>server.classList.remove('active'),400);log('info','[Server] sending server certificate + CertificateRequest')},
+    ()=>{client.classList.add('active');ca.classList.add('active');setTimeout(()=>{client.classList.remove('active');ca.classList.remove('active')},400);log('info','[Client] verifying server cert against CA')},
+    ()=>{log('ok','[Client] server cert VALID ✓ — server identity confirmed')},
+    ()=>{client.classList.add('active');setTimeout(()=>client.classList.remove('active'),400);log('info','[Client] sending client certificate to server')},
+    ()=>{server.classList.add('active');ca.classList.add('active');setTimeout(()=>{server.classList.remove('active');ca.classList.remove('active')},400);log('info','[Server] verifying client cert against CA')},
+    ()=>{log('ok','[Server] client cert VALID ✓ — client identity confirmed')},
+    ()=>{client.classList.add('active');server.classList.add('active');setTimeout(()=>{client.classList.remove('active');server.classList.remove('active')},500);log('ok','[mTLS] mutual trust established ✓ encrypted channel active')},
+  ];
+  let si=0;
+  this._tick=()=>{steps[si%steps.length]();si++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1100)},
 pause(){clearInterval(iid);running=false},
 reset(){clearInterval(iid);running=false;this.init()}},
 ];

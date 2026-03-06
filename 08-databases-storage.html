@@ -1,0 +1,271 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Databases & Storage — Flow Diagrams</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;600;700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0a0c10;--panel:#0f1318;--border:#1e2530;--accent:#00d4aa;--purple:#7c6af7;--orange:#ff6b35;--yellow:#ffd166;--red:#ff4466;--blue:#4fc3f7;--text:#c8d8e8;--dim:#4a5568}
+body{background:var(--bg);font-family:'JetBrains Mono',monospace;color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+.grid-bg{position:fixed;inset:0;background-image:linear-gradient(rgba(124,106,247,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(124,106,247,.03) 1px,transparent 1px);background-size:40px 40px;pointer-events:none;z-index:0}
+header{padding:20px 32px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:20px;z-index:1;position:relative}
+.back{font-size:11px;color:var(--dim);text-decoration:none;letter-spacing:.1em;transition:color .15s}.back:hover{color:var(--purple)}
+header h1{font-size:13px;font-weight:700;letter-spacing:.15em;text-transform:uppercase;color:var(--purple)}
+header span{font-size:10px;color:var(--dim)}
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border);overflow-x:auto;z-index:1;position:relative;flex-shrink:0}
+.tab{font-size:10px;letter-spacing:.08em;padding:12px 18px;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;color:var(--dim);transition:all .15s;text-transform:uppercase}
+.tab:hover{color:var(--text)}.tab.active{color:var(--purple);border-bottom-color:var(--purple)}
+.workspace{flex:1;display:flex;flex-direction:column;z-index:1;position:relative}
+.diagram-info{padding:20px 32px 0;display:flex;gap:24px;align-items:baseline}
+.diagram-info h2{font-size:14px;font-weight:700;color:var(--text)}
+.diagram-info p{font-size:10px;color:var(--dim);letter-spacing:.04em}
+.controls{padding:12px 32px;display:flex;gap:10px;align-items:center;border-bottom:1px solid var(--border)}
+.btn{font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;padding:7px 16px;border:1px solid;cursor:pointer;background:transparent;transition:all .15s}
+.btn-p{border-color:var(--purple);color:var(--purple)}.btn-p:hover{background:var(--purple);color:var(--bg)}
+.btn-s{border-color:var(--dim);color:var(--dim)}.btn-s:hover{border-color:var(--text);color:var(--text)}
+.btn-r{border-color:var(--red);color:var(--red)}.btn-r:hover{background:var(--red);color:var(--bg)}
+.canvas{flex:1;padding:32px;min-height:320px;position:relative;overflow:hidden}
+.log{height:90px;overflow-y:auto;border-top:1px solid var(--border);padding:10px 32px;font-size:9px;line-height:1.9;color:var(--dim)}
+.log::-webkit-scrollbar{width:3px}.log::-webkit-scrollbar-thumb{background:var(--dim)}
+.le{display:flex;gap:10px}.le .t{color:var(--dim);min-width:65px}.le.ok .m{color:var(--accent)}.le.warn .m{color:var(--yellow)}.le.err .m{color:var(--red)}.le.info .m{color:var(--purple)}
+.node{position:absolute;padding:8px 12px;border:1px solid;font-size:10px;text-align:center;transition:all .25s;white-space:nowrap}
+.node-green{background:rgba(0,212,170,.07);border-color:rgba(0,212,170,.3);color:var(--accent)}
+.node-purple{background:rgba(124,106,247,.07);border-color:rgba(124,106,247,.3);color:var(--purple)}
+.node-orange{background:rgba(255,107,53,.07);border-color:rgba(255,107,53,.3);color:var(--orange)}
+.node-blue{background:rgba(79,195,247,.07);border-color:rgba(79,195,247,.3);color:var(--blue)}
+.node-yellow{background:rgba(255,209,102,.07);border-color:rgba(255,209,102,.3);color:var(--yellow)}
+.node-red{background:rgba(255,68,102,.07);border-color:rgba(255,68,102,.3);color:var(--red)}
+.node.active{filter:brightness(1.6);box-shadow:0 0 12px currentColor}
+.node .sub{font-size:8px;color:var(--dim);margin-top:2px}
+</style>
+</head>
+<body>
+<div class="grid-bg"></div>
+<header>
+  <a href="index.html" class="back">&larr; hub</a>
+  <h1>Databases &amp; Storage</h1>
+  <span>// 5 animated flow diagrams</span>
+</header>
+<div class="tabs" id="tabs"></div>
+<div class="workspace">
+  <div class="diagram-info"><h2 id="dTitle"></h2><p id="dDesc"></p></div>
+  <div class="controls">
+    <button class="btn btn-p" id="btnPlay">&#9654; Start</button>
+    <button class="btn btn-s" id="btnPause">&#9208; Pause</button>
+    <button class="btn btn-r" id="btnReset">&#8634; Reset</button>
+  </div>
+  <div class="canvas" id="canvas"></div>
+  <div class="log" id="log"></div>
+</div>
+<script>
+let current=null,iid=null,running=false;
+const logEl=document.getElementById('log'),canvas=document.getElementById('canvas');
+function ts(){const n=new Date();return`${String(n.getHours()).padStart(2,'0')}:${String(n.getMinutes()).padStart(2,'0')}:${String(n.getSeconds()).padStart(2,'0')}`}
+function log(type,msg){const d=document.createElement('div');d.className=`le ${type}`;d.innerHTML=`<span class="t">${ts()}</span><span class="m">${msg}</span>`;logEl.appendChild(d);logEl.scrollTop=logEl.scrollHeight;while(logEl.children.length>40)logEl.removeChild(logEl.firstChild)}
+function clearLog(){logEl.innerHTML=''}
+function mkNode(x,y,w,label,sub,cls){const d=document.createElement('div');d.className=`node ${cls}`;d.style.cssText=`left:${x}px;top:${y}px;width:${w}px`;d.innerHTML=label+(sub?`<div class="sub">${sub}</div>`:'');canvas.appendChild(d);return d}
+
+const diagrams=[
+// 0: B-Tree Index Lookup
+{title:'B-Tree Index Lookup',desc:'Query traverses index tree from root → internal → leaf → data row',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const root=mkNode(cx/2-60,20,120,'Root Node','[30 | 60]','node-purple');
+  const int0=mkNode(cx/4-60,110,120,'Internal','[10 | 20]','node-blue');
+  const int1=mkNode(cx/2-60,110,120,'Internal','[40 | 50]','node-blue');
+  const int2=mkNode(cx*3/4-60,110,120,'Internal','[70 | 80]','node-blue');
+  const leaf0=mkNode(40,200,90,'Leaf','[8,9,10]','node-yellow');
+  const leaf1=mkNode(cx/4,200,90,'Leaf','[20,25]','node-yellow');
+  const leaf2=mkNode(cx/2-45,200,90,'Leaf','[42,45]','node-yellow');
+  const leaf3=mkNode(cx*3/4-45,200,90,'Leaf','[72,78]','node-yellow');
+  const dataRow=mkNode(cx/2-50,290,100,'Data Row','rowid found','node-green');
+  const levels=[[root],[int0,int1,int2],[leaf0,leaf1,leaf2,leaf3],[dataRow]];
+  const keys=[42,10,78,25,45,72,8,20,50,80];
+  let searchIdx=0;let step=0;let targetKey=0;
+  this._tick=()=>{
+    levels.flat().forEach(n=>n.classList.remove('active'));
+    if(step===0){targetKey=keys[searchIdx%keys.length];searchIdx++;log('info',`[Query] SELECT * WHERE key = ${targetKey}`);step++}
+    else if(step<=4){
+      const level=Math.min(step-1,3);
+      const node=levels[level][Math.floor(Math.random()*levels[level].length)];
+      node.classList.add('active');
+      if(level===0)log('info',`[Root] key=${targetKey} → scanning root node`);
+      else if(level===1)log('info',`[Internal] navigating to child pointer`);
+      else if(level===2)log('info',`[Leaf] scanning leaf page for key=${targetKey}`);
+      else log('ok',`[Found] key=${targetKey} → rowid:${Math.floor(Math.random()*9000+1000)} ✓`);
+      step++;
+      if(step>4)step=0;
+    }
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),800)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 1: MVCC
+{title:'MVCC',desc:'Multi-Version Concurrency Control — snapshot isolation for concurrent transactions',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const txA=mkNode(40,50,120,'Transaction A','READ (snapshot)','node-blue');
+  const txB=mkNode(cx-170,50,130,'Transaction B','WRITE','node-orange');
+  const table=mkNode(cx/2-70,140,140,'Table: orders','row_id=1','node-purple');
+  const v1=mkNode(40,240,110,'Version 1','val="old" xmin=100','node-yellow');
+  const v2=mkNode(cx/2-55,240,110,'Version 2','val="mid" xmin=105','node-yellow');
+  const v3=mkNode(cx-160,240,110,'Version 3','val="new" xmin=110','node-green');
+  let step=0;
+  const steps=[
+    ()=>{txA.classList.add('active');setTimeout(()=>txA.classList.remove('active'),400);log('info','[Tx A] BEGIN — snapshot at xid=105')},
+    ()=>{txB.classList.add('active');setTimeout(()=>txB.classList.remove('active'),400);log('info','[Tx B] BEGIN — xid=110')},
+    ()=>{txB.classList.add('active');table.classList.add('active');setTimeout(()=>{txB.classList.remove('active');table.classList.remove('active')},400);log('warn','[Tx B] UPDATE orders SET val="new" WHERE id=1')},
+    ()=>{v3.classList.add('active');setTimeout(()=>v3.classList.remove('active'),400);log('info','[MVCC] new version created xmin=110, old version retained')},
+    ()=>{txA.classList.add('active');v2.classList.add('active');setTimeout(()=>{txA.classList.remove('active');v2.classList.remove('active')},400);log('ok','[Tx A] SELECT → reads Version 2 (snapshot sees xmin<=105)')},
+    ()=>{txB.classList.add('active');setTimeout(()=>txB.classList.remove('active'),400);log('ok','[Tx B] COMMIT — version 3 now visible to new transactions')},
+    ()=>{txA.classList.add('active');v2.classList.add('active');setTimeout(()=>{txA.classList.remove('active');v2.classList.remove('active')},400);log('info','[Tx A] still reads Version 2 (consistent snapshot)')},
+    ()=>{log('ok','[Tx A] COMMIT — snapshot released, old versions eligible for vacuum')},
+  ];
+  this._tick=()=>{steps[step%steps.length]();step++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1200)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 2: Write-Ahead Log
+{title:'Write-Ahead Log (WAL)',desc:'Write path: query → WAL buffer → WAL file → memtable → SSTable flush',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const gap=Math.floor((cx-40)/5);
+  const query=mkNode(20,100,gap-10,'Client Query','INSERT/UPDATE','node-blue');
+  const walBuf=mkNode(20+gap,100,gap-10,'WAL Buffer','in-memory','node-yellow');
+  const walFile=mkNode(20+gap*2,100,gap-10,'WAL File','disk (append)','node-orange');
+  const mem=mkNode(20+gap*3,100,gap-10,'Memtable','sorted tree','node-purple');
+  const sst=mkNode(20+gap*4,100,gap-10,'SSTable','immutable file','node-green');
+  const stages=[query,walBuf,walFile,mem,sst];
+  let si=0,writes=0,flushes=0;
+  const statEl=document.createElement('div');statEl.style.cssText='position:absolute;bottom:20px;left:20px;font-size:9px;line-height:2';canvas.appendChild(statEl);
+  const upd=()=>{statEl.innerHTML=`wal_writes: <span style="color:var(--orange)">${writes}</span>  memtable_size: <span style="color:var(--purple)">${writes%50}MB</span>  flushes: <span style="color:var(--accent)">${flushes}</span>`};
+  upd();
+  this._tick=()=>{
+    stages.forEach(s=>s.classList.remove('active'));
+    stages[si].classList.add('active');
+    if(si===0){writes++;log('info',`[Query] INSERT INTO events VALUES(${Math.floor(Math.random()*9999)})`)}
+    else if(si===1)log('info','[WAL Buffer] buffering write in memory');
+    else if(si===2)log('info',`[WAL] fsync to disk — offset:${writes*64}B durable ✓`);
+    else if(si===3)log('info',`[Memtable] inserted into sorted tree (${writes%50}MB/64MB)`);
+    else{if(writes%50<5){flushes++;log('ok',`[Flush] memtable → SSTable #${flushes} (compaction eligible)`)}else log('info','[SSTable] awaiting memtable threshold for flush')}
+    upd();si=(si+1)%stages.length;
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),800)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 3: Sharding Strategies
+{title:'Sharding Strategies',desc:'Hash-based routing of queries across database shards',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const router=mkNode(cx/2-60,20,120,'Query Router','hash(key)%3','node-yellow');
+  const shards=[
+    mkNode(60,160,130,'Shard 0','keys: hash%3=0','node-blue'),
+    mkNode(cx/2-65,160,130,'Shard 1','keys: hash%3=1','node-purple'),
+    mkNode(cx-190,160,130,'Shard 2','keys: hash%3=2','node-green'),
+  ];
+  const counts=[0,0,0];
+  const keys=['user_42','order_999','product_7','session_abc','cart_123','txn_456','user_88','log_321'];
+  let qi=0;
+  this._tick=()=>{
+    const key=keys[qi%keys.length];qi++;
+    let hash=0;for(let i=0;i<key.length;i++)hash=((hash<<5)-hash)+key.charCodeAt(i);
+    const si=Math.abs(hash)%3;
+    counts[si]++;
+    router.classList.add('active');shards[si].classList.add('active');
+    setTimeout(()=>{router.classList.remove('active');shards[si].classList.remove('active')},400);
+    shards[si].querySelector('.sub').textContent=`rows: ${counts[si]}`;
+    log('ok',`[Router] key="${key}" → hash:${Math.abs(hash)%1000} → Shard ${si} (total:${counts[si]})`);
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),800)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 4: Connection Pooling
+{title:'Connection Pooling',desc:'App threads share a pool of database connections — acquire, use, release',
+init(){
+  canvas.innerHTML='';clearLog();
+  const cx=canvas.offsetWidth;
+  const threads=[
+    mkNode(20,40,100,'Thread 1','app worker','node-blue'),
+    mkNode(20,110,100,'Thread 2','app worker','node-blue'),
+    mkNode(20,180,100,'Thread 3','app worker','node-blue'),
+    mkNode(20,250,100,'Thread 4','app worker','node-blue'),
+  ];
+  // Pool box
+  const poolBox=document.createElement('div');
+  poolBox.style.cssText=`position:absolute;left:${cx/2-80}px;top:30px;width:160px;height:240px;border:1px dashed rgba(124,106,247,.3);background:rgba(124,106,247,.03)`;
+  canvas.appendChild(poolBox);
+  const poolLabel=document.createElement('div');poolLabel.style.cssText=`position:absolute;left:${cx/2-75}px;top:15px;font-size:8px;color:var(--purple);letter-spacing:.08em`;poolLabel.textContent='// connection pool (max:4)';canvas.appendChild(poolLabel);
+  const slots=[];
+  for(let i=0;i<4;i++){
+    const s=mkNode(cx/2-65,45+i*58,130,`Conn ${i}`,'idle','node-green');
+    slots.push(s);
+  }
+  const db=mkNode(cx-140,120,110,'PostgreSQL','port 5432','node-orange');
+  const pool={active:0,idle:4,waiting:0};
+  const statEl=document.createElement('div');statEl.style.cssText='position:absolute;bottom:20px;left:20px;font-size:9px;line-height:2';canvas.appendChild(statEl);
+  const upd=()=>{statEl.innerHTML=`active: <span style="color:var(--orange)">${pool.active}</span>  idle: <span style="color:var(--accent)">${pool.idle}</span>  waiting: <span style="color:var(--red)">${pool.waiting}</span>`};
+  upd();
+  this._tick=()=>{
+    const action=Math.random();
+    if(action<.5){
+      // acquire
+      const idle=slots.findIndex(s=>s.querySelector('.sub').textContent==='idle');
+      const ti=Math.floor(Math.random()*4);
+      threads[ti].classList.add('active');setTimeout(()=>threads[ti].classList.remove('active'),300);
+      if(idle>=0){
+        slots[idle].querySelector('.sub').textContent='active';
+        slots[idle].className='node node-orange';
+        pool.active++;pool.idle--;
+        log('ok',`[Pool] Thread ${ti+1} acquired Conn ${idle} (${pool.active}/4 active)`);
+      } else {
+        pool.waiting++;
+        log('warn',`[Pool] Thread ${ti+1} waiting — no idle connections (queue:${pool.waiting})`);
+      }
+    } else {
+      // release
+      const active=slots.findIndex(s=>s.querySelector('.sub').textContent==='active');
+      if(active>=0){
+        slots[active].querySelector('.sub').textContent='idle';
+        slots[active].className='node node-green';
+        pool.active--;pool.idle++;
+        if(pool.waiting>0){pool.waiting--;pool.active++;pool.idle--;
+          slots[active].querySelector('.sub').textContent='active';
+          slots[active].className='node node-orange';
+          log('info',`[Pool] Conn ${active} released → immediately given to waiting thread`);
+        } else {
+          log('info',`[Pool] Conn ${active} released back to pool (${pool.idle}/4 idle)`);
+        }
+        db.classList.add('active');setTimeout(()=>db.classList.remove('active'),200);
+      }
+    }
+    upd();
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),700)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+];
+
+const tabsEl=document.getElementById('tabs');
+diagrams.forEach((d,i)=>{const t=document.createElement('div');t.className='tab';t.textContent=d.title;t.onclick=()=>show(i);tabsEl.appendChild(t)});
+function show(i){if(current!==null)diagrams[current].pause&&diagrams[current].pause();running=false;clearInterval(iid);current=i;document.querySelectorAll('.tab').forEach((t,j)=>t.classList.toggle('active',j===i));document.getElementById('dTitle').textContent=diagrams[i].title;document.getElementById('dDesc').textContent=diagrams[i].desc;diagrams[i].init()}
+document.getElementById('btnPlay').onclick=()=>{if(current!==null&&!running){diagrams[current].start();running=true;}};
+document.getElementById('btnPause').onclick=()=>{if(current!==null){diagrams[current].pause();running=false;}};
+document.getElementById('btnReset').onclick=()=>{if(current!==null){diagrams[current].reset();running=false;}};
+show(0);
+</script>
+</body>
+</html>

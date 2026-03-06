@@ -50,7 +50,7 @@ header span{font-size:10px;color:var(--dim)}
 <header>
   <a href="index.html" class="back">← hub</a>
   <h1>Algorithms &amp; CS Concepts</h1>
-  <span>// 6 animated flow diagrams</span>
+  <span>// 10 animated flow diagrams</span>
 </header>
 <div class="tabs" id="tabs"></div>
 <div class="workspace">
@@ -281,6 +281,184 @@ init(){
   };
 },
 start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),700)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 6: Dijkstra's Shortest Path
+{title:"Dijkstra's Shortest Path",desc:'Greedy shortest path algorithm on a weighted graph — O((V+E)logV)',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  const cw=cv.offsetWidth;
+  const positions=[{x:cw/2-20,y:20},{x:80,y:100},{x:cw-130,y:100},{x:40,y:210},{x:cw/3-20,y:220},{x:cw*2/3-20,y:220},{x:cw-90,y:210}];
+  const edges=[[0,1,4],[0,2,3],[1,3,5],[1,4,2],[2,5,6],[2,6,1],[3,4,3],[4,5,4],[5,6,2]];
+  // Draw edges with SVG
+  const svg=document.createElementNS('http://www.w3.org/2000/svg','svg');
+  svg.style.cssText='position:absolute;inset:0;width:100%;height:100%;pointer-events:none';
+  edges.forEach(([a,b,w])=>{const pa=positions[a],pb=positions[b];
+    const l=document.createElementNS('http://www.w3.org/2000/svg','line');
+    l.setAttribute('x1',pa.x+20);l.setAttribute('y1',pa.y+20);l.setAttribute('x2',pb.x+20);l.setAttribute('y2',pb.y+20);
+    l.setAttribute('stroke','#2a3545');l.setAttribute('stroke-width','1.5');svg.appendChild(l);
+    const t=document.createElementNS('http://www.w3.org/2000/svg','text');
+    t.setAttribute('x',(pa.x+pb.x)/2+20);t.setAttribute('y',(pa.y+pb.y)/2+15);
+    t.setAttribute('fill','#4a5568');t.setAttribute('font-size','9');t.setAttribute('font-family','JetBrains Mono');t.textContent=w;svg.appendChild(t);
+  });
+  cv.appendChild(svg);
+  const gnodes=positions.map((p,i)=>{const d=document.createElement('div');d.className='gnode unvisited';d.style.left=p.x+'px';d.style.top=p.y+'px';d.textContent=i;cv.appendChild(d);return d});
+  const dist=[0,Infinity,Infinity,Infinity,Infinity,Infinity,Infinity];
+  const visited=new Array(7).fill(false);
+  const adj=[[],[],[],[],[],[],[]];
+  edges.forEach(([a,b,w])=>{adj[a].push([b,w]);adj[b].push([a,w])});
+  gnodes[0].classList.replace('unvisited','visiting');
+  let step=0;const order=[];
+  const findNext=()=>{let mn=Infinity,mi=-1;for(let i=0;i<7;i++)if(!visited[i]&&dist[i]<mn){mn=dist[i];mi=i;}return mi;};
+  this._tick=()=>{
+    const u=findNext();
+    if(u===-1){log('ok',"[Dijkstra] all nodes visited — shortest paths found ✓");return;}
+    visited[u]=true;
+    gnodes[u].classList.remove('visiting');gnodes[u].classList.add('visited');
+    log('info',`[Dijkstra] visiting node ${u} dist:${dist[u]}`);
+    adj[u].forEach(([v,w])=>{
+      if(!visited[v]&&dist[u]+w<dist[v]){
+        dist[v]=dist[u]+w;
+        gnodes[v].classList.remove('unvisited');gnodes[v].classList.add('visiting');
+        log('info',`[Update] node ${v} dist:${dist[v]} via node ${u}`);
+      }
+    });
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1200)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 7: LRU Cache Eviction
+{title:'LRU Cache Eviction',desc:'Least Recently Used cache — access moves to front, evict from back',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  const cw=cv.offsetWidth;
+  const CAPACITY=4;let cache=[];
+  // Cache slot boxes
+  const slotEls=[];
+  const label=document.createElement('div');label.style.cssText='position:absolute;left:20px;top:10px;font-size:9px;color:var(--dim);letter-spacing:.08em';label.textContent='// cache (capacity: 4) — MRU ← → LRU';cv.appendChild(label);
+  for(let i=0;i<CAPACITY;i++){
+    const s=document.createElement('div');s.className='bar';
+    s.style.cssText=`left:${20+i*(Math.floor((cw-60)/CAPACITY)+2)}px;width:${Math.floor((cw-60)/CAPACITY)-4}px;height:60px;bottom:auto;top:40px;display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;border-top:none;border:1px solid var(--border);background:rgba(79,195,247,.05)`;
+    s.textContent='—';cv.appendChild(s);slotEls.push(s);
+  }
+  const renderCache=()=>{
+    slotEls.forEach((s,i)=>{
+      if(i<cache.length){s.textContent=cache[i];s.style.borderColor='rgba(0,212,170,.4)';s.style.color='var(--accent)';s.style.background='rgba(0,212,170,.08)'}
+      else{s.textContent='—';s.style.borderColor='var(--border)';s.style.color='var(--dim)';s.style.background='rgba(79,195,247,.05)'}
+    });
+  };
+  const keys='ABCDEFGH'.split('');
+  this._tick=()=>{
+    const key=keys[Math.floor(Math.random()*keys.length)];
+    const idx=cache.indexOf(key);
+    slotEls.forEach(s=>{s.classList.remove('sorted','swapping','comparing')});
+    if(idx>=0){
+      cache.splice(idx,1);cache.unshift(key);
+      slotEls[0].classList.add('sorted');
+      log('ok',`[Cache] GET key:${key} → HIT (moved to front)`);
+    } else if(cache.length>=CAPACITY){
+      const evicted=cache.pop();
+      cache.unshift(key);
+      slotEls[CAPACITY-1].classList.add('swapping');
+      log('warn',`[Cache] GET key:${key} → MISS, evict key:${evicted} (LRU)`);
+      setTimeout(()=>{slotEls[0].classList.add('sorted');renderCache()},200);
+    } else {
+      cache.unshift(key);
+      slotEls[0].classList.add('sorted');
+      log('info',`[Cache] SET key:${key} at front (${cache.length}/${CAPACITY})`);
+    }
+    renderCache();
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),800)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 8: Bloom Filter
+{title:'Bloom Filter',desc:'Probabilistic set membership — insert with k hash functions, query with possible false positives',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  const cw=cv.offsetWidth;const BITS=20;
+  const bitArray=new Array(BITS).fill(0);
+  const inserted=new Set();
+  // Draw bit array
+  const bitW=Math.floor((cw-60)/BITS)-2;
+  const bitEls=[];
+  const label=document.createElement('div');label.style.cssText='position:absolute;left:20px;top:10px;font-size:9px;color:var(--dim);letter-spacing:.06em';label.textContent='// bit array (20 bits) — 3 hash functions';cv.appendChild(label);
+  for(let i=0;i<BITS;i++){
+    const b=document.createElement('div');
+    b.style.cssText=`position:absolute;left:${20+i*(bitW+2)}px;top:35px;width:${bitW}px;height:30px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--dim);transition:all .3s`;
+    b.textContent='0';cv.appendChild(b);bitEls.push(b);
+  }
+  // Hash function labels
+  ['H1','H2','H3'].forEach((h,i)=>{
+    const d=document.createElement('div');d.style.cssText=`position:absolute;left:${20+i*80}px;top:80px;font-size:9px;padding:3px 8px;border:1px solid rgba(124,106,247,.3);color:var(--purple)`;d.textContent=h;cv.appendChild(d);
+  });
+  const hash=(str,seed)=>{let h=seed;for(let i=0;i<str.length;i++)h=((h<<5)-h+str.charCodeAt(i))&0x7fffffff;return h%BITS};
+  const words=['apple','banana','cherry','date','elderberry','fig','grape','honeydew'];
+  let phase=0;// 0=insert, 1=query
+  let tick=0;
+  this._tick=()=>{
+    tick++;
+    bitEls.forEach(b=>{b.style.borderColor='var(--border)'});
+    if(tick<=5){
+      // Insert phase
+      const word=words[tick-1];inserted.add(word);
+      const h1=hash(word,7),h2=hash(word,13),h3=hash(word,31);
+      [h1,h2,h3].forEach(i=>{bitArray[i]=1;bitEls[i].textContent='1';bitEls[i].style.background='rgba(0,212,170,.15)';bitEls[i].style.color='var(--accent)';bitEls[i].style.borderColor='var(--accent)'});
+      log('info',`[Insert] "${word}" → H1:${h1} H2:${h2} H3:${h3} — bits set`);
+    } else {
+      // Query phase
+      const word=words[Math.floor(Math.random()*words.length)];
+      const h1=hash(word,7),h2=hash(word,13),h3=hash(word,31);
+      [h1,h2,h3].forEach(i=>{bitEls[i].style.borderColor='var(--yellow)'});
+      const allSet=[h1,h2,h3].every(i=>bitArray[i]===1);
+      const actuallyIn=inserted.has(word);
+      if(allSet&&!actuallyIn){log('err',`[Query] "${word}" → bits ${h1},${h2},${h3} all set → FALSE POSITIVE`)}
+      else if(allSet){log('ok',`[Query] "${word}" → probably in set ✓ (bits ${h1},${h2},${h3})`)}
+      else{log('info',`[Query] "${word}" → DEFINITELY NOT in set (bit ${[h1,h2,h3].find(i=>!bitArray[i])} is 0)`)}
+      if(tick>12){tick=0;bitArray.fill(0);inserted.clear();bitEls.forEach(b=>{b.textContent='0';b.style.background='transparent';b.style.color='var(--dim)'});log('info','[Reset] bloom filter cleared for next round')}
+    }
+  };
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),900)},
+pause(){clearInterval(iid);running=false},
+reset(){clearInterval(iid);running=false;this.init()}},
+
+// 9: Merkle Tree
+{title:'Merkle Tree Verification',desc:'Hash tree for data integrity — leaf hashes combine up to root hash',
+init(){
+  cv.innerHTML='';logEl.innerHTML='';
+  const cw=cv.offsetWidth;
+  // 4 leaf nodes → 2 internal → 1 root
+  const leaves=['Block 0','Block 1','Block 2','Block 3'];
+  const leafX=leaves.map((_,i)=>40+i*(Math.floor((cw-120)/4)+10));
+  const nodeW=Math.floor((cw-120)/4);
+  // Draw nodes
+  const leafEls=leaves.map((l,i)=>{const d=document.createElement('div');d.className='gnode unvisited';d.style.cssText=`left:${leafX[i]}px;top:200px;width:${nodeW}px;height:36px;border-radius:4px;font-size:8px`;d.textContent=l;cv.appendChild(d);return d});
+  const int0El=document.createElement('div');int0El.className='gnode unvisited';int0El.style.cssText=`left:${(leafX[0]+leafX[1])/2+nodeW/4}px;top:120px;width:${nodeW}px;height:36px;border-radius:4px;font-size:8px`;int0El.textContent='H(0+1)';cv.appendChild(int0El);
+  const int1El=document.createElement('div');int1El.className='gnode unvisited';int1El.style.cssText=`left:${(leafX[2]+leafX[3])/2+nodeW/4}px;top:120px;width:${nodeW}px;height:36px;border-radius:4px;font-size:8px`;int1El.textContent='H(2+3)';cv.appendChild(int1El);
+  const rootEl=document.createElement('div');rootEl.className='gnode unvisited';rootEl.style.cssText=`left:${cw/2-nodeW/2}px;top:40px;width:${nodeW}px;height:36px;border-radius:4px;font-size:8px`;rootEl.textContent='Root Hash';cv.appendChild(rootEl);
+  const hashes=leaves.map(()=>Math.random().toString(16).slice(2,6));
+  const intHashes=['',''];const allNodes=[...leafEls,int0El,int1El,rootEl];
+  let step=0;
+  const steps=[
+    ()=>{leafEls[0].classList.replace('unvisited','visiting');log('info',`[Leaf] H(Block0) = ${hashes[0]}...`)},
+    ()=>{leafEls[0].classList.replace('visiting','visited');leafEls[1].classList.replace('unvisited','visiting');log('info',`[Leaf] H(Block1) = ${hashes[1]}...`)},
+    ()=>{leafEls[1].classList.replace('visiting','visited');leafEls[2].classList.replace('unvisited','visiting');log('info',`[Leaf] H(Block2) = ${hashes[2]}...`)},
+    ()=>{leafEls[2].classList.replace('visiting','visited');leafEls[3].classList.replace('unvisited','visiting');log('info',`[Leaf] H(Block3) = ${hashes[3]}...`)},
+    ()=>{leafEls[3].classList.replace('visiting','visited');intHashes[0]=Math.random().toString(16).slice(2,6);int0El.classList.replace('unvisited','visiting');log('info',`[Level1] H(${hashes[0]}+${hashes[1]}) = ${intHashes[0]}...`)},
+    ()=>{int0El.classList.replace('visiting','visited');intHashes[1]=Math.random().toString(16).slice(2,6);int1El.classList.replace('unvisited','visiting');log('info',`[Level1] H(${hashes[2]}+${hashes[3]}) = ${intHashes[1]}...`)},
+    ()=>{int1El.classList.replace('visiting','visited');const rootHash=Math.random().toString(16).slice(2,8);rootEl.classList.replace('unvisited','visiting');log('ok',`[Root] H(${intHashes[0]}+${intHashes[1]}) = ${rootHash}`)},
+    ()=>{rootEl.classList.replace('visiting','visited');log('ok','[Verify] Block0 verified with sibling H(Block1) + H(2+3) → root ✓')},
+    ()=>{allNodes.forEach(n=>{n.classList.remove('visited','visiting');n.classList.add('unvisited')});log('info','[Reset] ready for next verification round')},
+  ];
+  this._tick=()=>{steps[step%steps.length]();step++};
+},
+start(){running=true;iid=setInterval(()=>this._tick&&this._tick(),1000)},
 pause(){clearInterval(iid);running=false},
 reset(){clearInterval(iid);running=false;this.init()}},
 ];
