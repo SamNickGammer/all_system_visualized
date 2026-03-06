@@ -616,10 +616,9 @@ export default function DiagramWorkspace({ title, categorySlug, accent, accentRg
             <div
               ref={canvasRef}
               style={{
-                height: '100%',
-                padding: 32,
+                position: 'absolute',
+                inset: '16px 16px 16px 24px',
                 minHeight: 320,
-                position: 'relative',
                 overflow: 'hidden',
               }}
             />
