@@ -6,11 +6,12 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Bubble Sort',
     desc: 'Adjacent element comparison and swap — O(n^2) time complexity',
+    params: [{ key: 'arraySize', label: 'Array Size', min: 4, max: 30, step: 1, default: 14 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log, clearLog } = ctx;
       clearLog();
 
-      const N = 14;
+      const N = ctx.params.arraySize ?? 14;
       let arr = Array.from({ length: N }, () => Math.floor(Math.random() * 200 + 20));
       const cx = canvas.offsetWidth - 64;
       const barW = Math.floor(cx / N) - 2;
@@ -283,12 +284,13 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Token Bucket Rate Limiter',
     desc: 'Tokens fill at steady rate — requests consume tokens, bursts allowed',
+    params: [{ key: 'capacity', label: 'Bucket Capacity', min: 4, max: 20, step: 1, default: 10 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log, clearLog } = ctx;
       clearLog();
 
-      const MAX = 10;
-      let tokens = 10;
+      const MAX = ctx.params.capacity ?? 10;
+      let tokens = MAX;
       let allowed = 0;
       let denied = 0;
 
@@ -350,11 +352,12 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Binary Search',
     desc: 'Divide and conquer — O(log n) search through sorted array',
+    params: [{ key: 'arraySize', label: 'Array Size', min: 4, max: 30, step: 1, default: 16 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log, clearLog } = ctx;
       clearLog();
 
-      const N = 16;
+      const N = ctx.params.arraySize ?? 16;
       const arr = Array.from({ length: N }, (_, i) => i * 7 + Math.floor(Math.random() * 4));
       arr.sort((a, b) => a - b);
       let target = arr[Math.floor(Math.random() * N)];
@@ -534,18 +537,19 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'LRU Cache Eviction',
     desc: 'Least Recently Used cache — access moves to front, evict from back',
+    params: [{ key: 'capacity', label: 'Cache Capacity', min: 2, max: 8, step: 1, default: 4 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log, clearLog } = ctx;
       clearLog();
 
       const cw = canvas.offsetWidth;
-      const CAPACITY = 4;
+      const CAPACITY = ctx.params.capacity ?? 4;
       let cache: string[] = [];
 
       const slotEls: HTMLDivElement[] = [];
       const label = document.createElement('div');
       label.style.cssText = 'position:absolute;left:20px;top:10px;font-size:9px;color:var(--dim);letter-spacing:.08em';
-      label.textContent = '// cache (capacity: 4) — MRU <- -> LRU';
+      label.textContent = `// cache (capacity: ${CAPACITY}) — MRU <- -> LRU`;
       canvas.appendChild(label);
 
       const slotW = Math.floor((cw - 60) / CAPACITY) - 4;
@@ -618,12 +622,13 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Bloom Filter',
     desc: 'Probabilistic set membership — insert with k hash functions, query with possible false positives',
+    params: [{ key: 'bits', label: 'Bit Array Size', min: 8, max: 32, step: 1, default: 20 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log, clearLog } = ctx;
       clearLog();
 
       const cw = canvas.offsetWidth;
-      const BITS = 20;
+      const BITS = ctx.params.bits ?? 20;
       const bitArray = new Array(BITS).fill(0) as number[];
       const inserted = new Set<string>();
 
@@ -632,7 +637,7 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
 
       const label = document.createElement('div');
       label.style.cssText = 'position:absolute;left:20px;top:10px;font-size:9px;color:var(--dim);letter-spacing:.06em';
-      label.textContent = '// bit array (20 bits) — 3 hash functions';
+      label.textContent = `// bit array (${BITS} bits) — 3 hash functions`;
       canvas.appendChild(label);
 
       for (let i = 0; i < BITS; i++) {
@@ -828,9 +833,10 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Quick Sort',
     desc: 'Partition-based divide and conquer — O(n log n) average, in-place',
+    params: [{ key: 'arraySize', label: 'Array Size', min: 4, max: 30, step: 1, default: 16 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log } = ctx;
-      const N = 16;
+      const N = ctx.params.arraySize ?? 16;
       const arr = Array.from({ length: N }, () => Math.floor(Math.random() * 200 + 20));
       const cx = canvas.offsetWidth - 64;
       const barW = Math.floor(cx / N) - 2;
@@ -912,9 +918,10 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Merge Sort',
     desc: 'Divide and conquer — O(n log n) stable sort by splitting and merging',
+    params: [{ key: 'arraySize', label: 'Array Size', min: 4, max: 30, step: 1, default: 16 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log } = ctx;
-      const N = 16;
+      const N = ctx.params.arraySize ?? 16;
       const arr = Array.from({ length: N }, () => Math.floor(Math.random() * 200 + 20));
       const cx = canvas.offsetWidth - 64;
       const barW = Math.floor(cx / N) - 2;
@@ -1046,9 +1053,13 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'A* Pathfinding',
     desc: 'Heuristic-guided shortest path on a grid — combines Dijkstra + greedy best-first',
+    params: [
+      { key: 'gridCols', label: 'Grid Columns', min: 8, max: 24, step: 1, default: 16 },
+      { key: 'gridRows', label: 'Grid Rows', min: 4, max: 14, step: 1, default: 10 },
+    ],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log } = ctx;
-      const COLS = 16, ROWS = 10;
+      const COLS = ctx.params.gridCols ?? 16, ROWS = ctx.params.gridRows ?? 10;
       const cw = canvas.offsetWidth - 40;
       const cellW = Math.floor(cw / COLS);
       const cellH = 26;
@@ -1152,15 +1163,16 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Hash Table',
     desc: 'Hash function maps keys to buckets — collisions handled via chaining',
+    params: [{ key: 'buckets', label: 'Bucket Count', min: 4, max: 12, step: 1, default: 8 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log } = ctx;
       const cw = canvas.offsetWidth;
-      const BUCKETS = 8;
+      const BUCKETS = ctx.params.buckets ?? 8;
       const bucketW = Math.floor((cw - 60) / BUCKETS) - 4;
       const buckets: string[][] = Array.from({ length: BUCKETS }, () => []);
       const bucketEls: HTMLDivElement[] = [];
 
-      createLabel(canvas, 20, 5, '// hash table — 8 buckets, chaining collision resolution', 'font-size:9px;color:var(--dim);letter-spacing:.06em');
+      createLabel(canvas, 20, 5, `// hash table — ${BUCKETS} buckets, chaining collision resolution`, 'font-size:9px;color:var(--dim);letter-spacing:.06em');
 
       for (let i = 0; i < BUCKETS; i++) {
         const b = document.createElement('div');
@@ -1645,13 +1657,17 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Sliding Window',
     desc: 'Find maximum sum subarray of size K — expand/contract window in O(n)',
+    params: [
+      { key: 'arraySize', label: 'Array Size', min: 6, max: 24, step: 1, default: 14 },
+      { key: 'windowSize', label: 'Window Size', min: 2, max: 6, step: 1, default: 4 },
+    ],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log } = ctx;
-      const N = 14;
+      const N = ctx.params.arraySize ?? 14;
       const arr = Array.from({ length: N }, () => Math.floor(Math.random() * 20) + 1);
       const cw = canvas.offsetWidth - 60;
       const cellW = Math.floor(cw / N);
-      const K = 4;
+      const K = ctx.params.windowSize ?? 4;
 
       createLabel(canvas, 20, 5, `// sliding window — find max sum of ${K} consecutive elements`, 'font-size:9px;color:var(--dim);letter-spacing:.06em');
 
@@ -1732,9 +1748,10 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Two Pointers',
     desc: 'Find pair with target sum in sorted array — O(n) with left/right pointers',
+    params: [{ key: 'arraySize', label: 'Array Size', min: 6, max: 20, step: 1, default: 12 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log } = ctx;
-      const N = 12;
+      const N = ctx.params.arraySize ?? 12;
       const arr = Array.from({ length: N }, (_, i) => i * 3 + Math.floor(Math.random() * 3) + 1).sort((a, b) => a - b);
       const cw = canvas.offsetWidth - 60;
       const cellW = Math.floor(cw / N);
@@ -1821,10 +1838,11 @@ export const algorithmsCsDiagrams: DiagramDef[] = [
   {
     title: 'Dynamic Programming',
     desc: 'Fibonacci with memoization — top-down vs bottom-up, O(n) vs O(2^n)',
+    params: [{ key: 'terms', label: 'Fibonacci Terms', min: 6, max: 20, step: 1, default: 14 }],
     init(ctx: DiagramContext): DiagramInstance {
       const { canvas, log } = ctx;
       const cw = canvas.offsetWidth;
-      const N = 14;
+      const N = ctx.params.terms ?? 14;
       const dp = new Array(N).fill(-1);
       dp[0] = 0; dp[1] = 1;
       const cellW = Math.floor((cw - 60) / N) - 2;

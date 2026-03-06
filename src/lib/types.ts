@@ -10,10 +10,22 @@ export type CleanupFn = () => void;
 /** Tick function called on each animation interval */
 export type TickFn = () => void;
 
+/** Configurable parameter for a diagram */
+export interface DiagramParam {
+  key: string;
+  label: string;
+  min: number;
+  max: number;
+  step: number;
+  default: number;
+}
+
 /** Core diagram definition */
 export interface DiagramDef {
   title: string;
   desc: string;
+  /** Optional configurable parameters (array size, node count, etc.) */
+  params?: DiagramParam[];
   /**
    * Initializes the diagram on the canvas.
    * Returns a tick function (called repeatedly) and optional cleanup.
@@ -26,6 +38,8 @@ export interface DiagramContext {
   canvas: HTMLDivElement;
   log: LogFn;
   clearLog: () => void;
+  /** Current values of configurable params */
+  params: Record<string, number>;
 }
 
 /** Returned by diagram init — controls animation lifecycle */
