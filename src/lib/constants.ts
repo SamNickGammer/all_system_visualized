@@ -96,7 +96,7 @@ export const CATEGORIES: CategoryMeta[] = [
 export const MAX_LOG_ENTRIES = 40;
 
 /** Default log panel height in px */
-export const DEFAULT_LOG_HEIGHT = 90;
+export const DEFAULT_LOG_HEIGHT = 245;
 
 /** Minimum log panel height in px */
-export const MIN_LOG_HEIGHT = 40;
+export const MIN_LOG_HEIGHT = 245;
